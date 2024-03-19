@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JUCERPROJECT id="lfdCpR" projectType="audioplug" useAppConfig="0" addUsingNamespaceToJuceHeader="0"
+              jucerFormatVersion="1" cppLanguageStandard="20" displaySplashScreen="1"
+              companyWebsite="www.pauldubrovsky.com" pluginFormats="buildStandalone,buildVST,buildVST3"
+              pluginChannelConfigs="{1, 1}, {2, 2}" pluginCode="Pdap" pluginVST3Category="Mastering"
+              name="cossack" pluginName="cossack" pluginVSTCategory="kPlugCategMastering">
+  <MAINGROUP id="WUPpUL" name="cossack">
+    <GROUP id="{450EBFE5-9F80-6CC1-57B5-B43344ACBDF1}" name="Source">
+      <FILE id="egmEGx" name="PluginEditor.cpp" compile="1" resource="0"
+            file="Source/PluginEditor.cpp"/>
+      <FILE id="HUIzeG" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
+      <FILE id="ysWvc4" name="ProcessorBase.h" compile="0" resource="0" file="Source/ProcessorBase.h"/>
+      <FILE id="CvoKkZ" name="Common.h" compile="0" resource="0" file="Source/Common.h"/>
+      <FILE id="CgEQ2T" name="LowHighCutProcessor.cpp" compile="1" resource="0"
+            file="Source/LowHighCutProcessor.cpp"/>
+      <FILE id="CJta9d" name="LowHighCutProcessor.h" compile="0" resource="0"
+            file="Source/LowHighCutProcessor.h"/>
+      <FILE id="y5omhz" name="PluginProcessor.cpp" compile="1" resource="0"
+            file="Source/PluginProcessor.cpp"/>
+      <FILE id="s77QHY" name="PluginProcessor.h" compile="0" resource="0"
+            file="Source/PluginProcessor.h"/>
+    </GROUP>
+    <GROUP id="{B2E81E6E-2E59-F468-2B5C-C5EB9E819F17}" name="Resources">
+      <FILE id="z7ayEd" name="background.jpg" compile="0" resource="1" file="Resources/background.jpg"/>
+      <FILE id="nSrT9z" name="handle.png" compile="0" resource="1" file="Resources/handle.png"/>
+      <FILE id="mbOjix" name="logo.png" compile="0" resource="1" file="Resources/logo.png"/>
+      <FILE id="hEkskz" name="scale.png" compile="0" resource="1" file="Resources/scale.png"/>
+      <FILE id="lXLLpr" name="screw.png" compile="0" resource="1" file="Resources/screw.png"/>
+    </GROUP>
+  </MAINGROUP>
+  <MODULES>
+    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_plugin_client" showAllCode="1" useLocalCopy="0"
+            useGlobalPath="1"/>
+    <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_dsp" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+  </MODULES>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
+  <EXPORTFORMATS>
+    <VS2022 targetFolder="Builds/VisualStudio2022">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="cossack"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="cossack"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_audio_basics" path="C:/Program Files/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="C:/Program Files/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="C:/Program Files/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_plugin_client" path="C:/Program Files/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="C:/Program Files/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="C:/Program Files/JUCE/modules"/>
+        <MODULEPATH id="juce_core" path="C:/Program Files/JUCE/modules"/>
+        <MODULEPATH id="juce_data_structures" path="C:/Program Files/JUCE/modules"/>
+        <MODULEPATH id="juce_events" path="C:/Program Files/JUCE/modules"/>
+        <MODULEPATH id="juce_graphics" path="C:/Program Files/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="C:/Program Files/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="C:/Program Files/JUCE/modules"/>
+        <MODULEPATH id="juce_dsp" path="C:/Program Files/JUCE/modules"/>
+      </MODULEPATHS>
+    </VS2022>
+  </EXPORTFORMATS>
+</JUCERPROJECT>
