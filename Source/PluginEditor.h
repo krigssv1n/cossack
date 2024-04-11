@@ -51,12 +51,11 @@ private:
 	juce::Label equalizerLabels_[10];
 	juce::Label equalizerHzLabel_;
 
-	// Mono/stereo
-	juce::TextButton midButton_;// { "midButton", juce::Colours::darkgrey, juce::Colours::dimgrey, juce::Colours::grey };
-	std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> midAttachment_;
-
-	juce::TextButton sideButton_;
-	std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> sideAttachment_;
+	// Mid/side
+	// { "midButton", juce::Colours::darkgrey, juce::Colours::dimgrey, juce::Colours::grey };
+	juce::TextButton midSideButtons_[3];
+	// TODO: make radio button group attachment class
+	std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> midSideAttachments_[3];
 
 	// Compressors (LA-2A & SSL G-Master)
 	juce::Slider optoSlider_;
@@ -72,6 +71,8 @@ private:
 	// Author's logo
 	juce::ImageComponent authorLogoLabel_;
 	juce::Label authorNameLabel_;
+
+	//std::unique_ptr<juce::Drawable> svgTest_;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CossackAudioProcessorEditor)
 };

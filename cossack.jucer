@@ -3,7 +3,7 @@
 <JUCERPROJECT id="lfdCpR" projectType="audioplug" useAppConfig="0" addUsingNamespaceToJuceHeader="0"
               jucerFormatVersion="1" cppLanguageStandard="20" displaySplashScreen="1"
               companyWebsite="www.pauldubrovsky.com" pluginFormats="buildStandalone,buildVST,buildVST3"
-              pluginChannelConfigs="{1, 1}, {2, 2}" pluginCode="Pdap" pluginVST3Category="Mastering"
+              pluginChannelConfigs="{2, 2}" pluginCode="Pdap" pluginVST3Category="Mastering"
               name="cossack" pluginName="cossack" pluginVSTCategory="kPlugCategMastering">
   <MAINGROUP id="WUPpUL" name="cossack">
     <GROUP id="{450EBFE5-9F80-6CC1-57B5-B43344ACBDF1}" name="Source">

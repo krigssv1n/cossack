@@ -17,7 +17,7 @@
 class LowHighCutProcessor : public ProcessorBase
 {
 public:
-	LowHighCutProcessor(float cutoffFrequency = 2000.f, bool isHighCut = false);
+	LowHighCutProcessor(float cutoffFrequency = 2000.f, int order = 8, bool isHighCut = false);
 
 	void prepareToPlay(double sampleRate, int samplesPerBlock) override;
 
@@ -36,6 +36,7 @@ private:
 	std::vector<std::shared_ptr<ProcessorType>> processors_;
 
 	float cutoffFrequency_;
+	int order_;
 	bool isHighCut_;
 	bool hasChanged_;
 };

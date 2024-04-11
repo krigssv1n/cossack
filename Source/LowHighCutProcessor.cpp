@@ -10,11 +10,14 @@
 
 #include "LowHighCutProcessor.h"
 
-LowHighCutProcessor::LowHighCutProcessor(float cutoffFrequency, bool isHighCut) :
-	cutoffFrequency_{ cutoffFrequency },
+LowHighCutProcessor::LowHighCutProcessor(float cutoffFrequency, int order, bool isHighCut) :
+	cutoffFrequency_(cutoffFrequency),
+	order_(order),
 	isHighCut_(isHighCut),
 	hasChanged_(true)
 {
+	jassert(cutoffFrequency_ >= 0);
+	jassert(order >= 0);
 }
 
 void LowHighCutProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
@@ -29,10 +32,10 @@ void LowHighCutProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 		//pd->state = juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, cutoffFrequency_);
 		//pd->state = juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, cutoffFrequency_);
 
-		// KRIGS: Order of 8 means 6 * 8 = 48 dB/oct rolloff slope
+		// KRIGS: (6 * order) dB/oct rolloff slope
 		auto filters = isHighCut_ ?
-			juce::dsp::FilterDesign<float>::designIIRLowpassHighOrderButterworthMethod(cutoffFrequency_, sampleRate, 8) :
-			juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(cutoffFrequency_, sampleRate, 8);
+			juce::dsp::FilterDesign<float>::designIIRLowpassHighOrderButterworthMethod(cutoffFrequency_, sampleRate, order_) :
+			juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(cutoffFrequency_, sampleRate, order_);
 
 		for (auto filter : filters)
 		{
@@ -58,7 +61,7 @@ void LowHighCutProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
 		pd->process(context);
 
 	/*
-	// KRIGS: simple low/high pass filter for test
+	// KRIGS: simple low/high pass filter for test, 6 & 12 dB/oct
 	oneSampleBuffer_.resize(buffer.getNumChannels(), 0.f);
 
 	const auto tan = tanf(juce::MathConstants<float>::pi * cutoffFrequency_ / sampleRate_);

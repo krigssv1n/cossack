@@ -56,22 +56,33 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 	equalizerHzLabel_.getLookAndFeel().setColour(juce::Label::textColourId, juce::Colours::black);
 	addAndMakeVisible(equalizerHzLabel_);
 
-	// Mono/stereo
-	midButton_.setName("midButton");
-	midButton_.setButtonText("Mid");
-	midButton_.setTooltip("Toggle the mono part of the signal");
-	midButton_.setClickingTogglesState(true);
-	addAndMakeVisible(midButton_);
+	// Mid/side
+	midSideButtons_[0].setName("midButton");
+	midSideButtons_[0].setButtonText("Mid");
+	midSideButtons_[0].setTooltip("Mid-only equalizer");
+	midSideButtons_[0].setClickingTogglesState(true);
+	midSideButtons_[0].setRadioGroupId(1001);
+	addAndMakeVisible(midSideButtons_[0]);
 
-	midAttachment_.reset(new juce::AudioProcessorValueTreeState::ButtonAttachment(apvst, "mid", midButton_));
+	midSideButtons_[1].setName("midSideButton");
+	midSideButtons_[1].setButtonText("Mid/Side");
+	midSideButtons_[1].setTooltip("Global equalizer");
+	midSideButtons_[1].setClickingTogglesState(true);
+	midSideButtons_[1].setRadioGroupId(1001);
+	addAndMakeVisible(midSideButtons_[1]);
 
-	sideButton_.setName("sideButton");
-	sideButton_.setButtonText("Side");
-	sideButton_.setTooltip("Toggle the stereo part of the signal");
-	sideButton_.setClickingTogglesState(true);
-	addAndMakeVisible(sideButton_);
+	midSideButtons_[2].setName("sideButton");
+	midSideButtons_[2].setButtonText("Side");
+	midSideButtons_[2].setTooltip("Side-only equalizer");
+	midSideButtons_[2].setClickingTogglesState(true);
+	midSideButtons_[2].setRadioGroupId(1001);
+	addAndMakeVisible(midSideButtons_[2]);
 
-	sideAttachment_.reset(new juce::AudioProcessorValueTreeState::ButtonAttachment(apvst, "side", sideButton_));
+	midSideAttachments_[0].reset(new juce::AudioProcessorValueTreeState::ButtonAttachment(apvst, "mid", midSideButtons_[0]));
+	midSideAttachments_[1].reset(new juce::AudioProcessorValueTreeState::ButtonAttachment(apvst, "midSide", midSideButtons_[1]));
+	midSideAttachments_[2].reset(new juce::AudioProcessorValueTreeState::ButtonAttachment(apvst, "side", midSideButtons_[2]));
+	// TODO: make radio button group attachment class
+	//midSideAttachment_.reset(new juce::AudioProcessorValueTreeState::ButtonAttachment(apvst, "mid", midButton_));
 
 	// Compressors
 	optoSlider_.setSliderStyle(juce::Slider::SliderStyle::LinearVertical);
@@ -100,7 +111,9 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 	//authorLogoLabel_.setImage(juce::ImageCache::getFromFile(juce::File::getCurrentWorkingDirectory().getChildFile("Images/logo.png"));
 	authorLogoLabel_.setImage(juce::ImageCache::getFromMemory(BinaryData::logo_png, BinaryData::logo_pngSize));
 	addAndMakeVisible(authorLogoLabel_);
-	
+
+	//svgTest_ = juce::Drawable::createFromImageData(BinaryData::testsvgrepocom_svg, BinaryData::testsvgrepocom_svgSize);
+
 	// Make sure that before the constructor has finished, you've set the
 	// editor's size to whatever you need it to be.
 	setSize(800, 600);
@@ -126,8 +139,16 @@ void CossackAudioProcessorEditor::paint (juce::Graphics& g)
 	g.fillAll();
 */
 	g.drawImageAt(background_, 0, 0);
+	//svgTest_->draw(g, 1.f);
 
-	lowCutShadow_.drawForRectangle(g, lowCutButton_.getBounds());
+	//lowCutShadow_.drawForRectangle(g, lowCutButton_.getBounds());
+	
+	//static const unsigned char pathData[] = { 110,109,0,0,0,0,0,0,0,0,108,0,0,0,0,0,0,0,0,99,101,0,0 };
+
+	//juce::Path path;
+	//path.loadPathFromData (pathData, sizeof (pathData));
+	//g.fillPath(path);
+	//g.strokePath(path, juce::PathStrokeType(5.0f));
 		
 	//g.setColour (juce::Colours::white);
     //g.setFont (16.0f);
@@ -190,14 +211,20 @@ void CossackAudioProcessorEditor::resized()
 
 	//midButton_.setShape(msButtonPath, true, false, true);
 	//midButton_.setTopLeftPosition(160, 160);
-	midButton_.setBounds(
-		160,
+	midSideButtons_[0].setBounds(
+		400 - msButtonWidth * 3 / 2,
 		160,
 		msButtonWidth,
 		msButtonHeight);
 
-	sideButton_.setBounds(
-		800 - 160 - msButtonWidth,
+	midSideButtons_[1].setBounds(
+		midSideButtons_[0].getX() + msButtonWidth,
+		160,
+		msButtonWidth,
+		msButtonHeight);
+
+	midSideButtons_[2].setBounds(
+		midSideButtons_[1].getX() + msButtonWidth,
 		160,
 		msButtonWidth,
 		msButtonHeight);
@@ -237,5 +264,5 @@ void CossackAudioProcessorEditor::resized()
 	const int logoWidth = 390 * 0.2;
 	const int logoHeight = 442 * 0.2;
 
-	authorLogoLabel_.setBounds(400 - logoWidth / 2, 140, logoWidth, logoHeight);
+	authorLogoLabel_.setBounds(400 - logoWidth / 2, 40, logoWidth, logoHeight);
 }

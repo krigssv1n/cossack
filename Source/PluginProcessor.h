@@ -70,17 +70,21 @@ private:
 		// Equalizer
 		juce::AudioParameterFloat* equalizer[10] = { nullptr };
 
-		// Mono/strereo
+		// Mid/side
 		juce::AudioParameterBool* mid = nullptr;
+		juce::AudioParameterBool* midSide = nullptr;
 		juce::AudioParameterBool* side = nullptr;
+		// TODO: make radio button group attachment class
+		//juce::AudioParameterInt* midSide = nullptr;
 
 		// Compressors
 		juce::AudioParameterFloat* opto = { nullptr };
 		juce::AudioParameterFloat* glue = { nullptr };
 	} parameters_;
 
-	LowHighCutProcessor lowCutProcessor_{ 1000.f };
-	LowHighCutProcessor highCutProcessor_{ 8000.f, true };
+	LowHighCutProcessor midLowCutProcessor_{ 30.f, 8 };
+	LowHighCutProcessor sideLowCutProcessor_{ 100.f, 2 };
+	LowHighCutProcessor highCutProcessor_{ 20000.f, 8, true };
 
 	//==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CossackAudioProcessor)

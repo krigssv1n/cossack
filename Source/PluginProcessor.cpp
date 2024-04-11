@@ -33,8 +33,9 @@ CossackAudioProcessor::CossackAudioProcessor()
 	for (int i = 0; i < 10; i++)
 		parameters_.equalizer[i] = static_cast<juce::AudioParameterFloat*>(valueTreeState_.getParameter("equalizer" + std::to_string(i)));
 
-	// Mono/strereo
+	// Mid/side
 	parameters_.mid = static_cast<juce::AudioParameterBool*>(valueTreeState_.getParameter("mid"));
+	parameters_.midSide = static_cast<juce::AudioParameterBool*>(valueTreeState_.getParameter("midSide"));
 	parameters_.side = static_cast<juce::AudioParameterBool*>(valueTreeState_.getParameter("side"));
 
 	// Compressors
@@ -113,7 +114,8 @@ void CossackAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBloc
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
-	lowCutProcessor_.prepareToPlay(sampleRate, samplesPerBlock);
+	midLowCutProcessor_.prepareToPlay(sampleRate, samplesPerBlock);
+	sideLowCutProcessor_.prepareToPlay(sampleRate, samplesPerBlock);
 	highCutProcessor_.prepareToPlay(sampleRate, samplesPerBlock);
 }
 
@@ -170,21 +172,81 @@ void CossackAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce
     // the samples and the outer loop is handling the channels.
     // Alternatively, you can process the samples with the channels
     // interleaved by keeping the same state.
-	if (parameters_.lowCut->get())
-		lowCutProcessor_.processBlock(buffer, midiMessages);
+	if (totalNumInputChannels == 2)
+	{
+		// TODO: optimize the order
+		
+		// stereo input, perform the mid/side processing
+		const float* samples[] = { buffer.getReadPointer(0), buffer.getReadPointer(1) };
 
+		// construct the buffers
+		juce::AudioBuffer<float> midBuffer(buffer.getNumChannels(), buffer.getNumSamples());
+		float* midSamples[] = { midBuffer.getWritePointer(0), midBuffer.getWritePointer(1) };
+
+		juce::AudioBuffer<float> sideBuffer(buffer.getNumChannels(), buffer.getNumSamples());
+		float* sideSamples[] = { sideBuffer.getWritePointer(0), sideBuffer.getWritePointer(1) };
+
+		for (auto i = 0; i < buffer.getNumSamples(); i++)
+		{
+			float mid = (samples[0][i] + samples[1][i]) * 0.5f;
+
+			midSamples[0][i] = midSamples[1][i] = mid;
+
+			sideSamples[0][i] = samples[0][i] - mid;
+			sideSamples[1][i] = samples[1][i] - mid;
+
+			/*
+			 s0 = 2 * s0 - s0 - s1 = s0 - s1 
+			 s1 = 2 * s1 - s0 - s1 = s1 - s0
+			*/
+		}
+
+		// pass more low frequencies in the mid, cut more in the side
+		if (parameters_.mid->get())
+		{
+			// leave only mid
+			if (parameters_.lowCut->get())
+				midLowCutProcessor_.processBlock(midBuffer, midiMessages);
+
+			buffer = midBuffer;
+		}
+		else if (parameters_.side->get())
+		{
+			// leave only side
+			if (parameters_.lowCut->get())
+				sideLowCutProcessor_.processBlock(sideBuffer, midiMessages);
+
+			buffer = sideBuffer;
+		}
+		else
+		{
+			// filter if needed...
+			if (parameters_.lowCut->get())
+			{
+				midLowCutProcessor_.processBlock(midBuffer, midiMessages);
+				sideLowCutProcessor_.processBlock(sideBuffer, midiMessages);
+
+				// ...add the mid & side buffers back together...
+				buffer = midBuffer;
+				buffer.addFrom(0, 0, sideBuffer, 0, 0, buffer.getNumSamples());
+				buffer.addFrom(1, 0, sideBuffer, 1, 0, buffer.getNumSamples());
+			}
+
+			// ...or do nothing
+		}
+	}
+	else
+	{
+		// non-stereo input
+
+		// cut low frequencies evenly
+		if (parameters_.lowCut->get())
+			midLowCutProcessor_.processBlock(buffer, midiMessages);
+	}
+
+	// high cut is the same for mid & side
 	if (parameters_.highCut->get())
 		highCutProcessor_.processBlock(buffer, midiMessages);
-
-/*
-	// calculate scale coefficient
-	// then do this per sample
-	m = (in_left + in_right) * 0.5;
-	s = (in_right - in_left) * 0.5 * width;
-
-	out_left = m - s;
-	out_right = m + s;
-	*/
 }
 
 //==============================================================================
@@ -237,9 +299,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout CossackAudioProcessor::creat
 	for (int i = 0; i < 10; i++)
 		layout.add(std::make_unique<juce::AudioParameterFloat>("equalizer" + std::to_string(i), "Equalizer" + std::to_string(i), juce::NormalisableRange{-12.f, 12.f, 0.1f, 1.f, false}, 0.f));
 
-	// Mono/stereo
+	// Mid/side
 	layout.add(std::make_unique<juce::AudioParameterBool>("mid", "Mid", false));
+	layout.add(std::make_unique<juce::AudioParameterBool>("midSide", "Mid/Side", true));
 	layout.add(std::make_unique<juce::AudioParameterBool>("side", "Side", false));
+	// TODO: make radio button group attachment class
+	//layout.add(std::make_unique<juce::AudioParameterInt>("midSide", "Mid/Side", 1));
 
 	// Compressors
 	layout.add(std::make_unique<juce::AudioParameterFloat>("opto", "Opto", juce::NormalisableRange{ 0.f, 1.f, 0.01f }, 0.f));
