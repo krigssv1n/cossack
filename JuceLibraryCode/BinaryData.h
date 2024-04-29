@@ -8,6 +8,15 @@
 
 namespace BinaryData
 {
+    extern const char*   Collonse_ttf;
+    const int            Collonse_ttfSize = 51360;
+
+    extern const char*   CollonseBoldBold_ttf;
+    const int            CollonseBoldBold_ttfSize = 46764;
+
+    extern const char*   CollonseHollow_ttf;
+    const int            CollonseHollow_ttfSize = 75792;
+
     extern const char*   background_jpg;
     const int            background_jpgSize = 120937;
 
@@ -24,7 +33,7 @@ namespace BinaryData
     const int            screw_pngSize = 9212;
 
     // Number of elements in the namedResourceList and originalFileNames arrays.
-    const int namedResourceListSize = 5;
+    const int namedResourceListSize = 8;
 
     // Points to the start of a list of resource names.
     extern const char* namedResourceList[];

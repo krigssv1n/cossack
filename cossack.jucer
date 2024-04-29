@@ -7,6 +7,10 @@
               name="cossack" pluginName="cossack" pluginVSTCategory="kPlugCategMastering">
   <MAINGROUP id="WUPpUL" name="cossack">
     <GROUP id="{450EBFE5-9F80-6CC1-57B5-B43344ACBDF1}" name="Source">
+      <FILE id="qagpaG" name="EllipticSlider.cpp" compile="1" resource="0"
+            file="Source/EllipticSlider.cpp"/>
+      <FILE id="r7ZnQ3" name="EllipticSlider.h" compile="0" resource="0"
+            file="Source/EllipticSlider.h"/>
       <FILE id="egmEGx" name="PluginEditor.cpp" compile="1" resource="0"
             file="Source/PluginEditor.cpp"/>
       <FILE id="HUIzeG" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
@@ -22,11 +26,20 @@
             file="Source/PluginProcessor.h"/>
     </GROUP>
     <GROUP id="{B2E81E6E-2E59-F468-2B5C-C5EB9E819F17}" name="Resources">
-      <FILE id="z7ayEd" name="background.jpg" compile="0" resource="1" file="Resources/background.jpg"/>
-      <FILE id="nSrT9z" name="handle.png" compile="0" resource="1" file="Resources/handle.png"/>
-      <FILE id="mbOjix" name="logo.png" compile="0" resource="1" file="Resources/logo.png"/>
-      <FILE id="hEkskz" name="scale.png" compile="0" resource="1" file="Resources/scale.png"/>
-      <FILE id="lXLLpr" name="screw.png" compile="0" resource="1" file="Resources/screw.png"/>
+      <GROUP id="{5AFBB8C9-624D-D816-2267-917557FDBD10}" name="Fonts">
+        <FILE id="gslzHF" name="Collonse.ttf" compile="0" resource="1" file="Resources/Fonts/Collonse.ttf"/>
+        <FILE id="wMsoFn" name="CollonseBoldBold.ttf" compile="0" resource="1"
+              file="Resources/Fonts/CollonseBoldBold.ttf"/>
+        <FILE id="JENxp6" name="CollonseHollow.ttf" compile="0" resource="1"
+              file="Resources/Fonts/CollonseHollow.ttf"/>
+      </GROUP>
+      <GROUP id="{D5967C15-7A1F-351F-5FDE-2F4501DEF4CB}" name="Images">
+        <FILE id="jx4fyi" name="background.jpg" compile="0" resource="1" file="Resources/Images/background.jpg"/>
+        <FILE id="aqZZJO" name="handle.png" compile="0" resource="1" file="Resources/Images/handle.png"/>
+        <FILE id="gayVs6" name="logo.png" compile="0" resource="1" file="Resources/Images/logo.png"/>
+        <FILE id="nXxjuD" name="scale.png" compile="0" resource="1" file="Resources/Images/scale.png"/>
+        <FILE id="NtE4cj" name="screw.png" compile="0" resource="1" file="Resources/Images/screw.png"/>
+      </GROUP>
     </GROUP>
   </MAINGROUP>
   <MODULES>

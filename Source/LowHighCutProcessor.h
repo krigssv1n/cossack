@@ -18,6 +18,7 @@ class LowHighCutProcessor : public ProcessorBase
 {
 public:
 	LowHighCutProcessor(float cutoffFrequency = 2000.f, int order = 8, bool isHighCut = false);
+	~LowHighCutProcessor() override;
 
 	void prepareToPlay(double sampleRate, int samplesPerBlock) override;
 
@@ -39,4 +40,7 @@ private:
 	int order_;
 	bool isHighCut_;
 	bool hasChanged_;
+
+	//==============================================================================
+	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LowHighCutProcessor)
 };

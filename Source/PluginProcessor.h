@@ -67,15 +67,19 @@ private:
 		juce::AudioParameterBool* lowCut = nullptr;
 		juce::AudioParameterBool* highCut = nullptr;
 
-		// Equalizer
-		juce::AudioParameterFloat* equalizer[10] = { nullptr };
-
 		// Mid/side
 		juce::AudioParameterBool* mid = nullptr;
 		juce::AudioParameterBool* midSide = nullptr;
 		juce::AudioParameterBool* side = nullptr;
 		// TODO: make radio button group attachment class
 		//juce::AudioParameterInt* midSide = nullptr;
+
+		// Equalizer
+		juce::AudioParameterFloat* equalizer[10] = { nullptr };
+
+		// Harmonics
+		juce::AudioParameterBool* harmonicsMid[10] = { nullptr };
+		juce::AudioParameterBool* harmonicsSide[8] = { nullptr };
 
 		// Compressors
 		juce::AudioParameterFloat* opto = { nullptr };

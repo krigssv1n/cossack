@@ -29,14 +29,22 @@ CossackAudioProcessor::CossackAudioProcessor()
 	parameters_.lowCut = static_cast<juce::AudioParameterBool*>(valueTreeState_.getParameter("lowCut"));
 	parameters_.highCut = static_cast<juce::AudioParameterBool*>(valueTreeState_.getParameter("highCut"));
 
-	// Equalizer
-	for (int i = 0; i < 10; i++)
-		parameters_.equalizer[i] = static_cast<juce::AudioParameterFloat*>(valueTreeState_.getParameter("equalizer" + std::to_string(i)));
-
 	// Mid/side
 	parameters_.mid = static_cast<juce::AudioParameterBool*>(valueTreeState_.getParameter("mid"));
 	parameters_.midSide = static_cast<juce::AudioParameterBool*>(valueTreeState_.getParameter("midSide"));
 	parameters_.side = static_cast<juce::AudioParameterBool*>(valueTreeState_.getParameter("side"));
+
+	for (int i = 0; i < 10; i++)
+	{
+		// Equalizer
+		parameters_.equalizer[i] = static_cast<juce::AudioParameterFloat*>(valueTreeState_.getParameter("equalizer" + std::to_string(i)));
+
+		// Harmonics
+		parameters_.harmonicsMid[i] = static_cast<juce::AudioParameterBool*>(valueTreeState_.getParameter("harmonicsMid" + std::to_string(i)));
+
+		if (i >= 2)
+			parameters_.harmonicsSide[i - 2] = static_cast<juce::AudioParameterBool*>(valueTreeState_.getParameter("harmonicsSide" + std::to_string(i - 2)));
+	}
 
 	// Compressors
 	parameters_.opto = static_cast<juce::AudioParameterFloat*>(valueTreeState_.getParameter("opto"));
@@ -295,9 +303,17 @@ juce::AudioProcessorValueTreeState::ParameterLayout CossackAudioProcessor::creat
 	layout.add(std::make_unique<juce::AudioParameterBool>("highCut", "High Cut", false));
 	//layout.add(std::make_unique<juce::AudioParameterFloat>("rolloffFactor", "Rolloff Factor", juce::NormalisableRange{ 5.f, 100.f, 0.1f, 0.5f }, 48.f));
 
-	// Equalizer
 	for (int i = 0; i < 10; i++)
-		layout.add(std::make_unique<juce::AudioParameterFloat>("equalizer" + std::to_string(i), "Equalizer" + std::to_string(i), juce::NormalisableRange{-12.f, 12.f, 0.1f, 1.f, false}, 0.f));
+	{
+		// Equalizer
+		layout.add(std::make_unique<juce::AudioParameterFloat>("equalizer" + std::to_string(i), "Equalizer" + std::to_string(i), juce::NormalisableRange{ -12.f, 12.f, 0.1f, 1.f, false }, 0.f));
+
+		// Harmonics
+		layout.add(std::make_unique<juce::AudioParameterBool>("harmonicsMid" + std::to_string(i), "Harmonics Mid" + std::to_string(i), false));
+
+		if (i >= 2)
+			layout.add(std::make_unique<juce::AudioParameterBool>("harmonicsSide" + std::to_string(i - 2), "Harmonics Side" + std::to_string(i - 2), false));
+	}
 
 	// Mid/side
 	layout.add(std::make_unique<juce::AudioParameterBool>("mid", "Mid", false));

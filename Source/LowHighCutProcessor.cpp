@@ -20,6 +20,10 @@ LowHighCutProcessor::LowHighCutProcessor(float cutoffFrequency, int order, bool 
 	jassert(order >= 0);
 }
 
+LowHighCutProcessor::~LowHighCutProcessor()
+{
+}
+
 void LowHighCutProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
 	if (hasChanged_)

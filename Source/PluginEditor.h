@@ -10,6 +10,7 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
+#include "EllipticSlider.h"
 
 //==============================================================================
 /**
@@ -33,7 +34,10 @@ private:
 
 	juce::TooltipWindow tooltipWindow_ { this };
 
+	//
 	// Low/high cut
+	//
+
 	juce::DropShadow lowCutShadow_{ juce::Colour(0x90000000), 8, juce::Point<int>(4, 4) };
 	juce::TextButton lowCutButton_;
 	std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> lowCutAttachment_;
@@ -45,30 +49,65 @@ private:
 	//std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> rolloffFactorAttachment_;
 	//juce::Label rolloffFactorLabel_;
 
-	// Equalizer
-	juce::Slider equalizerSliders_[10];
-	std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> equalizerAttachments_[10];
-	juce::Label equalizerLabels_[10];
-	juce::Label equalizerHzLabel_;
-
+	//
 	// Mid/side
+	//
+
 	// { "midButton", juce::Colours::darkgrey, juce::Colours::dimgrey, juce::Colours::grey };
 	juce::TextButton midSideButtons_[3];
 	// TODO: make radio button group attachment class
 	std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> midSideAttachments_[3];
 
+	//
+	// Equalizer
+	//
+
+	EllipticSlider equalizerMidSliders_[10];
+	std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> equalizerMidAttachments_[10];
+
+	EllipticSlider equalizerSideSliders_[10];
+	std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> equalizerSideAttachments_[10];
+
+	juce::Label equalizerLabels_[10];
+	//juce::Label equalizerHzLabel_;
+
+	//
+	// Harmonics
+	//
+
+	juce::TextButton harmonicsMidButtons_[10];
+	std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> harmonicsMidAttachments_[10];
+
+	// We don't use frequencies 31 & 63 for adding side harmonics
+	juce::TextButton harmonicsSideButtons_[8];
+	std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> harmonicsSideAttachments_[8];
+
+	juce::TextButton harmonicsLabels_[10];
+
+	//
 	// Compressors (LA-2A & SSL G-Master)
+	//
+
 	juce::Slider optoSlider_;
+	juce::ImageButton optoLights_[10];
 	std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> optoAttachment_;
 	juce::Label optoLabel_;
 
 	juce::Slider glueSlider_;
+	juce::ImageButton glueLights_[10];
 	std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> glueAttachment_;
 	juce::Label glueLabel_;
 
+	//
 	// Signal power indicator
-	
-	// Author's logo
+	//
+
+	//
+	// Author & plugin info
+	//
+
+	juce::Label pluginNameLabel_;
+
 	juce::ImageComponent authorLogoLabel_;
 	juce::Label authorNameLabel_;
 
