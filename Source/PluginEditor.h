@@ -106,10 +106,9 @@ private:
 	// Author & plugin info
 	//
 
-	juce::Label pluginNameLabel_;
-
 	juce::ImageComponent authorLogoLabel_;
 	juce::Label authorNameLabel_;
+	juce::Label pluginNameLabel_;
 
 	//std::unique_ptr<juce::Drawable> svgTest_;
 

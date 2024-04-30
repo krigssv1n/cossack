@@ -18,6 +18,14 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 	// editor's size to whatever you need it to be.
 	setSize(1000, 750);
 
+	//juce::Font avenirNextCyrRegularFont{ juce::Typeface::createSystemTypefaceFor(BinaryData::AvenirNextCyrRegular_ttf, BinaryData::AvenirNextCyrRegular_ttfSize) };
+	juce::Font collonseFont{ juce::Typeface::createSystemTypefaceFor(BinaryData::Collonse_ttf, BinaryData::Collonse_ttfSize) };
+	juce::Font collonseBoldFont{ juce::Typeface::createSystemTypefaceFor(BinaryData::CollonseBoldBold_ttf, BinaryData::CollonseBoldBold_ttfSize) };
+	juce::Font collonseHollowFont{ juce::Typeface::createSystemTypefaceFor(BinaryData::CollonseHollow_ttf, BinaryData::CollonseHollow_ttfSize) };
+
+	//juce::LookAndFeel::getDefaultLookAndFeel().setDefaultSansSerifTypeface(avenirNextCyrRegularFont.getTypefacePtr());
+	//getLookAndFeel().setDefaultSansSerifTypeface(avenirNextCyrRegularFont.getTypefacePtr());
+
 	auto& apvst = audioProcessor_.getValueTreeState();
 
 	background_ = juce::ImageCache::getFromMemory(BinaryData::background_jpg, BinaryData::background_jpgSize);
@@ -48,21 +56,21 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 
 	midSideButtons_[0].setName("midButton");
 	midSideButtons_[0].setButtonText("Mid");
-	midSideButtons_[0].setTooltip("Mid-only equalizer");
+	midSideButtons_[0].setTooltip("Mid-only playback");
 	midSideButtons_[0].setClickingTogglesState(true);
 	midSideButtons_[0].setRadioGroupId(1001);
 	addAndMakeVisible(midSideButtons_[0]);
 
 	midSideButtons_[1].setName("midSideButton");
 	midSideButtons_[1].setButtonText("Mid/Side");
-	midSideButtons_[1].setTooltip("Global equalizer");
+	midSideButtons_[1].setTooltip("Normal playback");
 	midSideButtons_[1].setClickingTogglesState(true);
 	midSideButtons_[1].setRadioGroupId(1001);
 	addAndMakeVisible(midSideButtons_[1]);
 
 	midSideButtons_[2].setName("sideButton");
 	midSideButtons_[2].setButtonText("Side");
-	midSideButtons_[2].setTooltip("Side-only equalizer");
+	midSideButtons_[2].setTooltip("Side-only playback");
 	midSideButtons_[2].setClickingTogglesState(true);
 	midSideButtons_[2].setRadioGroupId(1001);
 	addAndMakeVisible(midSideButtons_[2]);
@@ -79,6 +87,7 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 
 	for (int i = 0; i < 10; i++)
 	{
+		// Amplitude
 		equalizerMidSliders_[i].setSliderStyle(juce::Slider::SliderStyle::Rotary);
 		equalizerMidSliders_[i].setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
 		addAndMakeVisible(equalizerMidSliders_[i]);
@@ -132,43 +141,59 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 
 	optoAttachment_.reset(new juce::AudioProcessorValueTreeState::SliderAttachment(apvst, "opto", optoSlider_));
 
-	optoLabel_.setText("Opto", juce::dontSendNotification);
-	optoLabel_.setJustificationType(juce::Justification::centred);
-	optoLabel_.getLookAndFeel().setColour(juce::Label::textColourId, juce::Colours::black);
-	addAndMakeVisible(optoLabel_);
-
 	glueSlider_.setSliderStyle(juce::Slider::SliderStyle::LinearVertical);
 	glueSlider_.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
 	addAndMakeVisible(glueSlider_);
 
 	glueAttachment_.reset(new juce::AudioProcessorValueTreeState::SliderAttachment(apvst, "glue", glueSlider_));
 
-	glueLabel_.setText("Glue", juce::dontSendNotification);
-	glueLabel_.setJustificationType(juce::Justification::centred);
-	glueLabel_.getLookAndFeel().setColour(juce::Label::textColourId, juce::Colours::black);
-	addAndMakeVisible(glueLabel_);
+	{
+		collonseFont.setHeight(getBounds().getHeight() * 0.025f);
+
+		optoLabel_.setText("Opto", juce::dontSendNotification);
+		optoLabel_.setJustificationType(juce::Justification::centred);
+		optoLabel_.getLookAndFeel().setColour(juce::Label::textColourId, juce::Colours::black);
+		//optoLabel_.setColour(juce::Label::outlineColourId, juce::Colours::black);
+		optoLabel_.setFont(collonseFont);
+		addAndMakeVisible(optoLabel_);
+
+		glueLabel_.setText("Glue", juce::dontSendNotification);
+		glueLabel_.setJustificationType(juce::Justification::centred);
+		glueLabel_.getLookAndFeel().setColour(juce::Label::textColourId, juce::Colours::black);
+		//glueLabel_.setColour(juce::Label::outlineColourId, juce::Colours::black);
+		glueLabel_.setFont(collonseFont);
+		addAndMakeVisible(glueLabel_);
+	}
 
 	//
 	// Author & plugin info
 	//
 
-	//pluginNameLabel_.setText("COSSACK", juce::dontSendNotification);
-	//pluginNameLabel_.setJustificationType(juce::Justification::centred);
-	//pluginNameLabel_.getLookAndFeel().setColour(juce::Label::textColourId, juce::Colours::black);
-	//addAndMakeVisible(pluginNameLabel_);
-
 	//authorLogoLabel_.setImage(juce::ImageCache::getFromFile(juce::File::getCurrentWorkingDirectory().getChildFile("Images/logo.png"));
 	authorLogoLabel_.setImage(juce::ImageCache::getFromMemory(BinaryData::logo_png, BinaryData::logo_pngSize));
 	addAndMakeVisible(authorLogoLabel_);
 
-	authorNameLabel_.setText("PAUL\nDUBROVSKY", juce::dontSendNotification);
-	authorNameLabel_.setJustificationType(juce::Justification::centred);
-	authorNameLabel_.getLookAndFeel().setColour(juce::Label::textColourId, juce::Colours::black);
+	{
+		authorNameLabel_.setText("PAUL\nDUBROVSKY", juce::dontSendNotification);
+		authorNameLabel_.setJustificationType(juce::Justification::centred);
+		authorNameLabel_.getLookAndFeel().setColour(juce::Label::textColourId, juce::Colours::black);
 
-	juce::Font font{ juce::Typeface::createSystemTypefaceFor(BinaryData::CollonseHollow_ttf, BinaryData::CollonseHollow_ttfSize) };
-	font.setHeight(getBounds().getWidth() * 0.05f);
-	authorNameLabel_.setFont(font);
-	addAndMakeVisible(authorNameLabel_);
+		collonseHollowFont.setHeight(getBounds().getHeight() * 0.05f);
+		authorNameLabel_.setFont(collonseHollowFont);
+
+		addAndMakeVisible(authorNameLabel_);
+	}
+
+	{
+		pluginNameLabel_.setText("Cossack", juce::dontSendNotification);
+		pluginNameLabel_.setJustificationType(juce::Justification::centred);
+		pluginNameLabel_.getLookAndFeel().setColour(juce::Label::textColourId, juce::Colours::black);
+
+		collonseBoldFont.setHeight(getBounds().getHeight() * 0.05f);
+		pluginNameLabel_.setFont(collonseBoldFont);
+
+		addAndMakeVisible(pluginNameLabel_);
+	}
 
 	//svgTest_ = juce::Drawable::createFromImageData(BinaryData::testsvgrepocom_svg, BinaryData::testsvgrepocom_svgSize);
 }
@@ -217,17 +242,20 @@ void CossackAudioProcessorEditor::resized()
 	// Editor rectangle (main window)
 	const auto editor{ getLocalBounds() };
 
+	const float borderOffsetX = editor.getWidth() * 0.07f;
+	const float borderOffsetY = editor.getWidth() * 0.07f;
+
 	//
 	// Low/high cut
 	//
 
-	//const int cutButtonWidth = 90;
-	//const int cutButtonHeight = 60;
-	//const int cutButtonOffset = 30;
-	const int cutButtonX = editor.getWidth() * 0.0375f;
-	const int cutButtonY = editor.getHeight() * 0.0375f;
-	const int cutButtonWidth = editor.getWidth() * 0.1f;
-	const int cutButtonHeight = editor.getHeight() * 0.1f;
+	//const float cutButtonWidth = 90.f;
+	//const float cutButtonHeight = 60.f;
+	//const float cutButtonOffset = 30.f;
+	const float cutButtonWidth = editor.getWidth() * 0.07f;
+	const float cutButtonHeight = editor.getHeight() * 0.05f;
+	const float cutButtonX = borderOffsetX;
+	const float cutButtonY = borderOffsetY;
 
 	lowCutButton_.setBounds(
 		cutButtonX,
@@ -245,12 +273,12 @@ void CossackAudioProcessorEditor::resized()
 	// Mid/side
 	//
 
-	//const int msButtonWidth = 70;
-	//const int msButtonHeight = 50;
-	const int msButtonWidth = editor.getWidth() * 0.0875f;
-	const int msButtonHeight = editor.getWidth() * 0.085f;
-	const int msButtonX = editor.getCentreX() - msButtonWidth * 1.5f;
-	const int msButtonY = editor.getHeight() * 0.2f;
+	//const float msButtonWidth = 70.f;
+	//const float msButtonHeight = 50.f;
+	const float msButtonWidth = editor.getWidth() * 0.07f;
+	const float msButtonHeight = editor.getHeight() * 0.05f;
+	const float msButtonX = editor.getCentreX() - msButtonWidth * 1.5f;
+	const float msButtonY = editor.getHeight() * 0.2f;
 
 	midSideButtons_[0].setBounds(
 		msButtonX,
@@ -274,14 +302,14 @@ void CossackAudioProcessorEditor::resized()
 	// Equalizer
 	//
 
-	//const int equalizerX = 30;
-	const float equalizerX = editor.getWidth() * 0.0375f;
-	const float equalizerY = editor.getHeight() * 0.35f;
+	//const float equalizerX = 30.f;
+	const float equalizerX = borderOffsetX;
+	const float equalizerY = editor.getHeight() * 0.3f;
 	const float equalizerMidDiameter = editor.getWidth() * 0.08f;
 	const float equalizerSideDiameter = editor.getWidth() * 0.05f;
-	//const int equalizerSpacing = 10;
+	//const float equalizerSpacing = 10.f;
 	const float equalizerSpacing = (editor.getWidth() - equalizerX * 2.f) / 10.f - equalizerMidDiameter;
-	const int equalizerLabelHeight = editor.getHeight() * 0.05f;
+	const float equalizerLabelHeight = editor.getHeight() * 0.05f;
 
 	for (int i = 0; i < 10; i++)
 	{
@@ -292,7 +320,7 @@ void CossackAudioProcessorEditor::resized()
 			equalizerMidDiameter,
 			equalizerMidDiameter);
 
-		const int offset = (equalizerMidDiameter - equalizerSideDiameter) / 2;
+		const float offset = (equalizerMidDiameter - equalizerSideDiameter) * 0.5f;
 		
 		equalizerSideSliders_[i].setBounds(
 			equalizerMidSliders_[i].getX() + offset,
@@ -307,30 +335,27 @@ void CossackAudioProcessorEditor::resized()
 			equalizerLabelHeight);
 		
 		// Harmonics
-		juce::Rectangle<int> harmonicsMidBounds;
-
-		harmonicsMidBounds.setY(equalizerLabels_[i].getY() + equalizerLabels_[i].getHeight());
-		harmonicsMidBounds.setWidth(equalizerMidSliders_[i].getWidth() * 0.35f);
-		harmonicsMidBounds.setHeight(editor.getHeight() * 0.025f);
-
-		const int harmonicButtonX = (equalizerMidSliders_[i].getX() + equalizerMidSliders_[i].getWidth() / 2) - harmonicsMidBounds.getWidth() / 2;
+		const float harmonicButtonWidth = equalizerMidSliders_[i].getWidth() * 0.45f;
+		const float harmonicButtonHeight = editor.getHeight() * 0.0333f;
+		float harmonicButtonX = (equalizerMidSliders_[i].getX() + equalizerMidSliders_[i].getWidth() * 0.5f) - harmonicButtonWidth * 0.5f;
+		const float harmonicButtonY = equalizerLabels_[i].getY() + equalizerLabels_[i].getHeight();
 
 		if (i >= 2)
 		{
-			harmonicsMidBounds.setX(harmonicButtonX - harmonicsMidBounds.getWidth() / 2);
+			harmonicButtonX -= harmonicButtonWidth * 0.5f;
 
 			harmonicsSideButtons_[i - 2].setBounds(
-				harmonicsMidBounds.getX() + harmonicsMidBounds.getWidth(),
-				harmonicsMidBounds.getY(),
-				harmonicsMidBounds.getWidth(),
-				harmonicsMidBounds.getHeight());
-		}
-		else
-		{
-			harmonicsMidBounds.setX(harmonicButtonX);
+				harmonicButtonX + harmonicButtonWidth,
+				harmonicButtonY,
+				harmonicButtonWidth,
+				harmonicButtonHeight);
 		}
 
-		harmonicsMidButtons_[i].setBounds(harmonicsMidBounds);
+		harmonicsMidButtons_[i].setBounds(
+			harmonicButtonX,
+			harmonicButtonY,
+			harmonicButtonWidth,
+			harmonicButtonHeight);
 	}
 
 	//equalizerHzLabel_.setBounds(
@@ -343,12 +368,12 @@ void CossackAudioProcessorEditor::resized()
 	// Compressors
 	//
 
-	//const int compressorSliderWidth = 70;
-	const int compressorSliderWidth = editor.getWidth() * 0.0875f;
-	const int compressorSliderHeight = editor.getHeight() * 0.35f;
-	const int compressorSliderX = editor.getWidth() * 0.2f;
-	const int compressorSliderY = editor.getHeight() * 0.95f - compressorSliderHeight;
-	const int compressorLabelHeight = editor.getHeight() * 0.05f;
+	//const float compressorSliderWidth = 70.f;
+	const float compressorSliderWidth = editor.getWidth() * 0.0875f;
+	const float compressorSliderHeight = editor.getHeight() * 0.35f;
+	const float compressorSliderX = borderOffsetX + editor.getWidth() * 0.1f;
+	const float compressorSliderY = editor.getHeight() - borderOffsetY - compressorSliderHeight;
+	const float compressorLabelHeight = compressorSliderHeight;
 
 	optoSlider_.setBounds(
 		compressorSliderX,
@@ -357,13 +382,13 @@ void CossackAudioProcessorEditor::resized()
 		compressorSliderHeight);
 	
 	optoLabel_.setBounds(
-		0,
+		borderOffsetX,
 		optoSlider_.getY() + (optoSlider_.getHeight() - compressorLabelHeight) / 2,
-		compressorSliderX,
+		compressorSliderX - borderOffsetX,
 		compressorLabelHeight);
 
 	glueSlider_.setBounds(
-		editor.getWidth() - compressorSliderWidth - compressorSliderX,
+		editor.getWidth() - compressorSliderX - compressorSliderWidth,
 		compressorSliderY,
 		compressorSliderWidth,
 		compressorSliderHeight);
@@ -371,7 +396,7 @@ void CossackAudioProcessorEditor::resized()
 	glueLabel_.setBounds(
 		glueSlider_.getX() + glueSlider_.getWidth(),
 		glueSlider_.getY() + (glueSlider_.getHeight() - compressorLabelHeight) / 2,
-		compressorSliderX,
+		editor.getWidth() - glueSlider_.getX() - glueSlider_.getWidth() - borderOffsetX,
 		compressorLabelHeight);
 
 	//
@@ -382,17 +407,29 @@ void CossackAudioProcessorEditor::resized()
 	// Author & plugin info
 	//
 
-	const int logoWidth = editor.getWidth() * 0.1;
-	const int logoHeight = logoWidth * (442.f / 390.f);
+	const float authorNameWidth = editor.getWidth() * 0.3f;
+	const float authorNameHeight = editor.getHeight() * 0.1f;
 
-	authorLogoLabel_.setBounds(editor.getCentreX() - logoWidth / 2, optoSlider_.getY(), logoWidth, logoHeight);
-
-	const int nameX = optoSlider_.getX() + optoSlider_.getWidth();
-	const int nameY = authorLogoLabel_.getY() + authorLogoLabel_.getHeight();
-	
 	authorNameLabel_.setBounds(
-		nameX,
-		nameY,
-		glueSlider_.getX() - nameX,
-		editor.getHeight() - nameY);
+		editor.getCentreX() - authorNameWidth * 0.5f,
+		editor.getHeight() - borderOffsetY - authorNameHeight,
+		authorNameWidth,
+		authorNameHeight);
+
+	const float authorLogoWidth = editor.getWidth() * 0.09f;
+	const float authorLogoHeight = authorLogoWidth * (442.f / 390.f);
+
+	authorLogoLabel_.setBounds(
+		editor.getCentreX() - authorLogoWidth * 0.5f,
+		authorNameLabel_.getY() - authorLogoHeight * 1.5f,
+		authorLogoWidth,
+		authorLogoHeight);
+
+	const float pluginNameWidth = editor.getWidth() * 0.3f;
+
+	pluginNameLabel_.setBounds(
+		editor.getCentreX() - pluginNameWidth * 0.5f,
+		borderOffsetY,
+		pluginNameWidth,
+		editor.getHeight() * 0.05f);
 }

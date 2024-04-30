@@ -41,10 +41,10 @@
  #define JucePlugin_Enable_ARA             0
 #endif
 #ifndef  JucePlugin_Name
- #define JucePlugin_Name                   "cossack"
+ #define JucePlugin_Name                   "Cossack"
 #endif
 #ifndef  JucePlugin_Desc
- #define JucePlugin_Desc                   "cossack"
+ #define JucePlugin_Desc                   "Audio mastering plugin by Paul Dubrovsky."
 #endif
 #ifndef  JucePlugin_Manufacturer
  #define JucePlugin_Manufacturer           "yourcompany"
@@ -137,7 +137,7 @@
  #define JucePlugin_IAASubType             JucePlugin_PluginCode
 #endif
 #ifndef  JucePlugin_IAAName
- #define JucePlugin_IAAName                "yourcompany: cossack"
+ #define JucePlugin_IAAName                "yourcompany: Cossack"
 #endif
 #ifndef  JucePlugin_VSTNumMidiInputs
  #define JucePlugin_VSTNumMidiInputs       16

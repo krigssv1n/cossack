@@ -4,7 +4,8 @@
               jucerFormatVersion="1" cppLanguageStandard="20" displaySplashScreen="1"
               companyWebsite="www.pauldubrovsky.com" pluginFormats="buildStandalone,buildVST,buildVST3"
               pluginChannelConfigs="{2, 2}" pluginCode="Pdap" pluginVST3Category="Mastering"
-              name="cossack" pluginName="cossack" pluginVSTCategory="kPlugCategMastering">
+              name="cossack" pluginName="Cossack" pluginVSTCategory="kPlugCategMastering"
+              pluginDesc="Audio mastering plugin by Paul Dubrovsky.">
   <MAINGROUP id="WUPpUL" name="cossack">
     <GROUP id="{450EBFE5-9F80-6CC1-57B5-B43344ACBDF1}" name="Source">
       <FILE id="qagpaG" name="EllipticSlider.cpp" compile="1" resource="0"
