@@ -85,6 +85,32 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 	// Equalizer & harmonics
 	//
 
+	const char *harmonicsNames[10]{ "Burning", "Hot", "Warm", "Nice", "Mild", "Cool", "Brisk", "Chilly", "Cold", "Freezing" };
+	const juce::Colour harmonicsButtonColours[10]{
+		{ 64, 64, 64 },
+		{ 146, 46, 0 },
+		{ 255, 0, 0 },
+		{ 255, 141, 0 },
+		{ 255, 255, 0 },
+		{ 9, 191, 0 },
+		{ 0, 0, 255 },
+		{ 0, 199, 199 },
+		{ 179, 179, 179 },
+		{ 255, 255, 255 }
+	};
+	const juce::Colour harmonicsTextColours[10]{
+		{ 255, 255, 255 },
+		{ 255, 255, 255 },
+		{ 255, 255, 255 },
+		{ 255, 255, 255 },
+		{ 0, 0, 0 },
+		{ 255, 255, 255 },
+		{ 255, 255, 255 },
+		{ 255, 255, 255 },
+		{ 255, 255, 255 },
+		{ 0, 0, 0 }
+	};
+
 	for (int i = 0; i < 10; i++)
 	{
 		// Amplitude
@@ -102,14 +128,18 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 
 		equalizerLabels_[i].setText(std::to_string(g_frequencyBands[i]), juce::dontSendNotification);
 		equalizerLabels_[i].setJustificationType(juce::Justification::centred);
-		equalizerLabels_[i].getLookAndFeel().setColour(juce::Label::textColourId, juce::Colours::black);
+		equalizerLabels_[i].setColour(juce::Label::textColourId, juce::Colours::black);
 		addAndMakeVisible(equalizerLabels_[i]);
 
 		// Harmonics
 		harmonicsMidButtons_[i].setName("harmonicMidButton" + std::to_string(i));
+		harmonicsMidButtons_[i].setColour(juce::TextButton::buttonColourId, harmonicsButtonColours[i].darker());
+		harmonicsMidButtons_[i].setColour(juce::TextButton::buttonOnColourId, harmonicsButtonColours[i]);
+		harmonicsMidButtons_[i].setColour(juce::TextButton::textColourOffId, harmonicsTextColours[i].darker());
+		harmonicsMidButtons_[i].setColour(juce::TextButton::textColourOnId, harmonicsTextColours[i]);
 		harmonicsMidButtons_[i].setButtonText("M");
 		harmonicsMidButtons_[i].setTooltip("Mid harmonic enhancement for this frequency");
-		harmonicsMidButtons_[i].setClickingTogglesState(false);
+		harmonicsMidButtons_[i].setClickingTogglesState(true);
 		addAndMakeVisible(harmonicsMidButtons_[i]);
 
 		harmonicsMidAttachments_[i].reset(new juce::AudioProcessorValueTreeState::ButtonAttachment(apvst, "harmonicMid" + std::to_string(i), harmonicsMidButtons_[i]));
@@ -117,18 +147,28 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 		if (i >= 2)
 		{
 			harmonicsSideButtons_[i - 2].setName("harmonicSideButton" + std::to_string(i - 2));
+			harmonicsSideButtons_[i - 2].setColour(juce::TextButton::buttonColourId, harmonicsButtonColours[i].darker());
+			harmonicsSideButtons_[i - 2].setColour(juce::TextButton::buttonOnColourId, harmonicsButtonColours[i]);
+			harmonicsSideButtons_[i - 2].setColour(juce::TextButton::textColourOffId, harmonicsTextColours[i].darker());
+			harmonicsSideButtons_[i - 2].setColour(juce::TextButton::textColourOnId, harmonicsTextColours[i]);
 			harmonicsSideButtons_[i - 2].setButtonText("S");
 			harmonicsSideButtons_[i - 2].setTooltip("Side harmonic enhancement for this frequency");
-			harmonicsSideButtons_[i - 2].setClickingTogglesState(false);
+			harmonicsSideButtons_[i - 2].setClickingTogglesState(true);
 			addAndMakeVisible(harmonicsSideButtons_[i - 2]);
+
 
 			harmonicsSideAttachments_[i - 2].reset(new juce::AudioProcessorValueTreeState::ButtonAttachment(apvst, "harmonicSide" + std::to_string(i - 2), harmonicsSideButtons_[i - 2]));
 		}
+
+		harmonicsLabels_[i].setText(harmonicsNames[i], juce::dontSendNotification);
+		harmonicsLabels_[i].setJustificationType(juce::Justification::centred);
+		harmonicsLabels_[i].setColour(juce::Label::textColourId, juce::Colours::black);
+		addAndMakeVisible(harmonicsLabels_[i]);
 	}
 
 	//equalizerHzLabel_.setText("Hz", juce::dontSendNotification);
 	//equalizerHzLabel_.setJustificationType(juce::Justification::centred);
-	//equalizerHzLabel_.getLookAndFeel().setColour(juce::Label::textColourId, juce::Colours::black);
+	//equalizerHzLabel_.setColour(juce::Label::textColourId, juce::Colours::black);
 	//addAndMakeVisible(equalizerHzLabel_);
 
 	//
@@ -148,18 +188,18 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 	glueAttachment_.reset(new juce::AudioProcessorValueTreeState::SliderAttachment(apvst, "glue", glueSlider_));
 
 	{
-		collonseFont.setHeight(getBounds().getHeight() * 0.025f);
+		collonseFont.setHeight(getBounds().getHeight() * 0.035f);
 
-		optoLabel_.setText("Opto", juce::dontSendNotification);
+		optoLabel_.setText("OPTO", juce::dontSendNotification);
 		optoLabel_.setJustificationType(juce::Justification::centred);
-		optoLabel_.getLookAndFeel().setColour(juce::Label::textColourId, juce::Colours::black);
+		optoLabel_.setColour(juce::Label::textColourId, juce::Colours::black);
 		//optoLabel_.setColour(juce::Label::outlineColourId, juce::Colours::black);
 		optoLabel_.setFont(collonseFont);
 		addAndMakeVisible(optoLabel_);
 
-		glueLabel_.setText("Glue", juce::dontSendNotification);
+		glueLabel_.setText("GLUE", juce::dontSendNotification);
 		glueLabel_.setJustificationType(juce::Justification::centred);
-		glueLabel_.getLookAndFeel().setColour(juce::Label::textColourId, juce::Colours::black);
+		glueLabel_.setColour(juce::Label::textColourId, juce::Colours::black);
 		//glueLabel_.setColour(juce::Label::outlineColourId, juce::Colours::black);
 		glueLabel_.setFont(collonseFont);
 		addAndMakeVisible(glueLabel_);
@@ -176,7 +216,7 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 	{
 		authorNameLabel_.setText("PAUL\nDUBROVSKY", juce::dontSendNotification);
 		authorNameLabel_.setJustificationType(juce::Justification::centred);
-		authorNameLabel_.getLookAndFeel().setColour(juce::Label::textColourId, juce::Colours::black);
+		authorNameLabel_.setColour(juce::Label::textColourId, juce::Colours::black);
 
 		collonseHollowFont.setHeight(getBounds().getHeight() * 0.05f);
 		authorNameLabel_.setFont(collonseHollowFont);
@@ -185,11 +225,11 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 	}
 
 	{
-		pluginNameLabel_.setText("Cossack", juce::dontSendNotification);
+		pluginNameLabel_.setText("COSSACK", juce::dontSendNotification);
 		pluginNameLabel_.setJustificationType(juce::Justification::centred);
-		pluginNameLabel_.getLookAndFeel().setColour(juce::Label::textColourId, juce::Colours::black);
+		pluginNameLabel_.setColour(juce::Label::textColourId, juce::Colours::black);
 
-		collonseBoldFont.setHeight(getBounds().getHeight() * 0.05f);
+		collonseBoldFont.setHeight(getBounds().getHeight() * 0.07f);
 		pluginNameLabel_.setFont(collonseBoldFont);
 
 		addAndMakeVisible(pluginNameLabel_);
@@ -304,7 +344,7 @@ void CossackAudioProcessorEditor::resized()
 
 	//const float equalizerX = 30.f;
 	const float equalizerX = borderOffsetX;
-	const float equalizerY = editor.getHeight() * 0.3f;
+	const float equalizerY = editor.getHeight() * 0.35f;
 	const float equalizerMidDiameter = editor.getWidth() * 0.08f;
 	const float equalizerSideDiameter = editor.getWidth() * 0.05f;
 	//const float equalizerSpacing = 10.f;
@@ -356,6 +396,12 @@ void CossackAudioProcessorEditor::resized()
 			harmonicButtonY,
 			harmonicButtonWidth,
 			harmonicButtonHeight);
+
+		harmonicsLabels_[i].setBounds(
+			equalizerMidSliders_[i].getX(),
+			harmonicsMidButtons_[i].getY() + harmonicsMidButtons_[i].getHeight(),
+			equalizerMidSliders_[i].getWidth(),
+			equalizerLabelHeight);
 	}
 
 	//equalizerHzLabel_.setBounds(
@@ -370,7 +416,7 @@ void CossackAudioProcessorEditor::resized()
 
 	//const float compressorSliderWidth = 70.f;
 	const float compressorSliderWidth = editor.getWidth() * 0.0875f;
-	const float compressorSliderHeight = editor.getHeight() * 0.35f;
+	const float compressorSliderHeight = editor.getHeight() * 0.3f;
 	const float compressorSliderX = borderOffsetX + editor.getWidth() * 0.1f;
 	const float compressorSliderY = editor.getHeight() - borderOffsetY - compressorSliderHeight;
 	const float compressorLabelHeight = compressorSliderHeight;

@@ -82,7 +82,7 @@ private:
 	juce::TextButton harmonicsSideButtons_[8];
 	std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> harmonicsSideAttachments_[8];
 
-	juce::TextButton harmonicsLabels_[10];
+	juce::Label harmonicsLabels_[10];
 
 	//
 	// Compressors (LA-2A & SSL G-Master)
