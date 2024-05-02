@@ -41,9 +41,9 @@ void LowHighCutProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 			juce::dsp::FilterDesign<float>::designIIRLowpassHighOrderButterworthMethod(cutoffFrequency_, sampleRate, order_) :
 			juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(cutoffFrequency_, sampleRate, order_);
 
-		for (auto filter : filters)
+		for (auto& filter : filters)
 		{
-			auto pd = std::make_shared<ProcessorType>(filter);
+			auto pd = std::make_shared<Duplicator>(filter);
 			pd->prepare(spec);
 
 			processors_.push_back(pd);

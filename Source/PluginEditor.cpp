@@ -8,7 +8,6 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
-#include "Common.h"
 
 //==============================================================================
 CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor& p)
@@ -87,27 +86,50 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 
 	const char *harmonicsNames[10]{ "Burning", "Hot", "Warm", "Nice", "Mild", "Cool", "Brisk", "Chilly", "Cold", "Freezing" };
 	const juce::Colour harmonicsButtonColours[10]{
-		{ 64, 64, 64 },
-		{ 146, 46, 0 },
-		{ 255, 0, 0 },
-		{ 255, 141, 0 },
-		{ 255, 255, 0 },
-		{ 9, 191, 0 },
-		{ 0, 0, 255 },
-		{ 0, 199, 199 },
-		{ 179, 179, 179 },
-		{ 255, 255, 255 }
+		// set 1 (from flower picture)
+		//{ 64, 64, 64 },
+		//{ 146, 46, 0 },
+		//{ 255, 0, 0 },
+		//{ 255, 141, 0 },
+		//{ 255, 255, 0 },
+		//{ 9, 191, 0 },
+		//{ 0, 0, 255 },
+		//{ 199, 0, 199 },
+		//{ 179, 179, 179 },
+		//{ 255, 255, 255 }
+
+		// set 2 (from light spectre)
+		{ 255, 51, 51 },
+		{ 255, 76, 63 },
+		{ 255, 101, 69 },
+		{ 255, 144, 68 },
+		{ 255, 232, 100 },
+		{ 195, 255, 85 },
+		{ 110, 255, 132 },
+		{ 74, 203, 255 },
+		{ 121, 189, 255 },
+		{ 119, 83, 255 }
 	};
 	const juce::Colour harmonicsTextColours[10]{
-		{ 255, 255, 255 },
-		{ 255, 255, 255 },
-		{ 255, 255, 255 },
-		{ 255, 255, 255 },
+		//{ 255, 255, 255 },
+		//{ 255, 255, 255 },
+		//{ 255, 255, 255 },
+		//{ 255, 255, 255 },
+		//{ 255, 255, 255 },
+		//{ 255, 255, 255 },
+		//{ 255, 255, 255 },
+		//{ 255, 255, 255 },
+		//{ 255, 255, 255 },
+		//{ 255, 255, 255 }
 		{ 0, 0, 0 },
-		{ 255, 255, 255 },
-		{ 255, 255, 255 },
-		{ 255, 255, 255 },
-		{ 255, 255, 255 },
+		{ 0, 0, 0 },
+		{ 0, 0, 0 },
+		{ 0, 0, 0 },
+		{ 0, 0, 0 },
+		{ 0, 0, 0 },
+		{ 0, 0, 0 },
+		{ 0, 0, 0 },
+		{ 0, 0, 0 },
 		{ 0, 0, 0 }
 	};
 
@@ -126,7 +148,7 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 
 		equalizerSideAttachments_[i].reset(new juce::AudioProcessorValueTreeState::SliderAttachment(apvst, "equalizerSide" + std::to_string(i), equalizerSideSliders_[i]));
 
-		equalizerLabels_[i].setText(std::to_string(g_frequencyBands[i]), juce::dontSendNotification);
+		equalizerLabels_[i].setText(std::to_string(CossackAudioProcessor::frequencyBands[i]), juce::dontSendNotification);
 		equalizerLabels_[i].setJustificationType(juce::Justification::centred);
 		equalizerLabels_[i].setColour(juce::Label::textColourId, juce::Colours::black);
 		addAndMakeVisible(equalizerLabels_[i]);
@@ -135,29 +157,32 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 		harmonicsMidButtons_[i].setName("harmonicMidButton" + std::to_string(i));
 		harmonicsMidButtons_[i].setColour(juce::TextButton::buttonColourId, harmonicsButtonColours[i].darker());
 		harmonicsMidButtons_[i].setColour(juce::TextButton::buttonOnColourId, harmonicsButtonColours[i]);
-		harmonicsMidButtons_[i].setColour(juce::TextButton::textColourOffId, harmonicsTextColours[i].darker());
-		harmonicsMidButtons_[i].setColour(juce::TextButton::textColourOnId, harmonicsTextColours[i]);
+		harmonicsMidButtons_[i].setColour(juce::TextButton::textColourOffId, { 0, 0, 0 });
+		harmonicsMidButtons_[i].setColour(juce::TextButton::textColourOnId, { 255, 255, 255 });
+		//harmonicsMidButtons_[i].setColour(juce::TextButton::textColourOffId, harmonicsTextColours[i].darker());
+		//harmonicsMidButtons_[i].setColour(juce::TextButton::textColourOnId, harmonicsTextColours[i]);
 		harmonicsMidButtons_[i].setButtonText("M");
 		harmonicsMidButtons_[i].setTooltip("Mid harmonic enhancement for this frequency");
 		harmonicsMidButtons_[i].setClickingTogglesState(true);
 		addAndMakeVisible(harmonicsMidButtons_[i]);
 
-		harmonicsMidAttachments_[i].reset(new juce::AudioProcessorValueTreeState::ButtonAttachment(apvst, "harmonicMid" + std::to_string(i), harmonicsMidButtons_[i]));
+		harmonicsMidAttachments_[i].reset(new juce::AudioProcessorValueTreeState::ButtonAttachment(apvst, "harmonicsMid" + std::to_string(i), harmonicsMidButtons_[i]));
 
 		if (i >= 2)
 		{
-			harmonicsSideButtons_[i - 2].setName("harmonicSideButton" + std::to_string(i - 2));
+			harmonicsSideButtons_[i - 2].setName("harmonicSideButton" + std::to_string(i));
 			harmonicsSideButtons_[i - 2].setColour(juce::TextButton::buttonColourId, harmonicsButtonColours[i].darker());
 			harmonicsSideButtons_[i - 2].setColour(juce::TextButton::buttonOnColourId, harmonicsButtonColours[i]);
-			harmonicsSideButtons_[i - 2].setColour(juce::TextButton::textColourOffId, harmonicsTextColours[i].darker());
-			harmonicsSideButtons_[i - 2].setColour(juce::TextButton::textColourOnId, harmonicsTextColours[i]);
+			harmonicsSideButtons_[i - 2].setColour(juce::TextButton::textColourOffId, { 0, 0, 0 });
+			harmonicsSideButtons_[i - 2].setColour(juce::TextButton::textColourOnId, { 255, 255, 255 });
+			//harmonicsSideButtons_[i - 2].setColour(juce::TextButton::textColourOffId, harmonicsTextColours[i].darker());
+			//harmonicsSideButtons_[i - 2].setColour(juce::TextButton::textColourOnId, harmonicsTextColours[i]);
 			harmonicsSideButtons_[i - 2].setButtonText("S");
 			harmonicsSideButtons_[i - 2].setTooltip("Side harmonic enhancement for this frequency");
 			harmonicsSideButtons_[i - 2].setClickingTogglesState(true);
 			addAndMakeVisible(harmonicsSideButtons_[i - 2]);
 
-
-			harmonicsSideAttachments_[i - 2].reset(new juce::AudioProcessorValueTreeState::ButtonAttachment(apvst, "harmonicSide" + std::to_string(i - 2), harmonicsSideButtons_[i - 2]));
+			harmonicsSideAttachments_[i - 2].reset(new juce::AudioProcessorValueTreeState::ButtonAttachment(apvst, "harmonicsSide" + std::to_string(i), harmonicsSideButtons_[i - 2]));
 		}
 
 		harmonicsLabels_[i].setText(harmonicsNames[i], juce::dontSendNotification);
@@ -345,39 +370,39 @@ void CossackAudioProcessorEditor::resized()
 	//const float equalizerX = 30.f;
 	const float equalizerX = borderOffsetX;
 	const float equalizerY = editor.getHeight() * 0.35f;
-	const float equalizerMidDiameter = editor.getWidth() * 0.08f;
-	const float equalizerSideDiameter = editor.getWidth() * 0.05f;
+	const float equalizerMidDiameter = editor.getWidth() * 0.05f;
+	const float equalizerSideDiameter = editor.getWidth() * 0.08f;
 	//const float equalizerSpacing = 10.f;
-	const float equalizerSpacing = (editor.getWidth() - equalizerX * 2.f) / 10.f - equalizerMidDiameter;
+	const float equalizerSpacing = (editor.getWidth() - equalizerX * 2.f) / 10.f - equalizerSideDiameter;
 	const float equalizerLabelHeight = editor.getHeight() * 0.05f;
 
 	for (int i = 0; i < 10; i++)
 	{
 		// Amplitude
-		equalizerMidSliders_[i].setBounds(
-			equalizerX + i * (equalizerMidDiameter + equalizerSpacing),
-			equalizerY,
-			equalizerMidDiameter,
-			equalizerMidDiameter);
-
-		const float offset = (equalizerMidDiameter - equalizerSideDiameter) * 0.5f;
-		
 		equalizerSideSliders_[i].setBounds(
-			equalizerMidSliders_[i].getX() + offset,
-			equalizerMidSliders_[i].getY() + offset,
+			equalizerX + i * (equalizerSideDiameter + equalizerSpacing),
+			equalizerY,
 			equalizerSideDiameter,
 			equalizerSideDiameter);
 
+		const float offset = (equalizerSideDiameter - equalizerMidDiameter) * 0.5f;
+		
+		equalizerMidSliders_[i].setBounds(
+			equalizerSideSliders_[i].getX() + offset,
+			equalizerSideSliders_[i].getY() + offset,
+			equalizerMidDiameter,
+			equalizerMidDiameter);
+
 		equalizerLabels_[i].setBounds(
-			equalizerMidSliders_[i].getX(),
-			equalizerMidSliders_[i].getY() + equalizerMidSliders_[i].getHeight(),
-			equalizerMidSliders_[i].getWidth(),
+			equalizerSideSliders_[i].getX(),
+			equalizerSideSliders_[i].getY() + equalizerSideSliders_[i].getHeight(),
+			equalizerSideSliders_[i].getWidth(),
 			equalizerLabelHeight);
 		
 		// Harmonics
-		const float harmonicButtonWidth = equalizerMidSliders_[i].getWidth() * 0.45f;
+		const float harmonicButtonWidth = equalizerSideSliders_[i].getWidth() * 0.45f;
 		const float harmonicButtonHeight = editor.getHeight() * 0.0333f;
-		float harmonicButtonX = (equalizerMidSliders_[i].getX() + equalizerMidSliders_[i].getWidth() * 0.5f) - harmonicButtonWidth * 0.5f;
+		float harmonicButtonX = (equalizerSideSliders_[i].getX() + equalizerSideSliders_[i].getWidth() * 0.5f) - harmonicButtonWidth * 0.5f;
 		const float harmonicButtonY = equalizerLabels_[i].getY() + equalizerLabels_[i].getHeight();
 
 		if (i >= 2)
@@ -398,9 +423,9 @@ void CossackAudioProcessorEditor::resized()
 			harmonicButtonHeight);
 
 		harmonicsLabels_[i].setBounds(
-			equalizerMidSliders_[i].getX(),
+			equalizerSideSliders_[i].getX(),
 			harmonicsMidButtons_[i].getY() + harmonicsMidButtons_[i].getHeight(),
-			equalizerMidSliders_[i].getWidth(),
+			equalizerSideSliders_[i].getWidth(),
 			equalizerLabelHeight);
 	}
 

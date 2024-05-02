@@ -37,13 +37,14 @@ CossackAudioProcessor::CossackAudioProcessor()
 	for (int i = 0; i < 10; i++)
 	{
 		// Equalizer
-		parameters_.equalizer[i] = static_cast<juce::AudioParameterFloat*>(valueTreeState_.getParameter("equalizer" + std::to_string(i)));
+		parameters_.equalizerMid[i] = static_cast<juce::AudioParameterFloat*>(valueTreeState_.getParameter("equalizerMid" + std::to_string(i)));
+		parameters_.equalizerSide[i] = static_cast<juce::AudioParameterFloat*>(valueTreeState_.getParameter("equalizerSide" + std::to_string(i)));
 
 		// Harmonics
 		parameters_.harmonicsMid[i] = static_cast<juce::AudioParameterBool*>(valueTreeState_.getParameter("harmonicsMid" + std::to_string(i)));
 
 		if (i >= 2)
-			parameters_.harmonicsSide[i - 2] = static_cast<juce::AudioParameterBool*>(valueTreeState_.getParameter("harmonicsSide" + std::to_string(i - 2)));
+			parameters_.harmonicsSide[i - 2] = static_cast<juce::AudioParameterBool*>(valueTreeState_.getParameter("harmonicsSide" + std::to_string(i)));
 	}
 
 	// Compressors
@@ -125,6 +126,22 @@ void CossackAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBloc
 	midLowCutProcessor_.prepareToPlay(sampleRate, samplesPerBlock);
 	sideLowCutProcessor_.prepareToPlay(sampleRate, samplesPerBlock);
 	highCutProcessor_.prepareToPlay(sampleRate, samplesPerBlock);
+
+	// FIXME: temporary
+	// Update equalizer processors
+	juce::dsp::ProcessSpec spec{ sampleRate, static_cast<juce::uint32> (samplesPerBlock), getMainBusNumInputChannels() };
+	equalizerProcessors_.prepare(spec);
+
+	*equalizerProcessors_.get<0>().state = *Coefficients::makeLowShelf(sampleRate, frequencyBands[0], 1.f, juce::Decibels::decibelsToGain(parameters_.equalizerSide[0]->get()));
+	*equalizerProcessors_.get<1>().state = *Coefficients::makePeakFilter(sampleRate, frequencyBands[1], 1.f, juce::Decibels::decibelsToGain(parameters_.equalizerSide[1]->get()));
+	*equalizerProcessors_.get<2>().state = *Coefficients::makePeakFilter(sampleRate, frequencyBands[2], 1.f, juce::Decibels::decibelsToGain(parameters_.equalizerSide[2]->get()));
+	*equalizerProcessors_.get<3>().state = *Coefficients::makePeakFilter(sampleRate, frequencyBands[3], 1.f, juce::Decibels::decibelsToGain(parameters_.equalizerSide[3]->get()));
+	*equalizerProcessors_.get<4>().state = *Coefficients::makePeakFilter(sampleRate, frequencyBands[4], 1.f, juce::Decibels::decibelsToGain(parameters_.equalizerSide[4]->get()));
+	*equalizerProcessors_.get<5>().state = *Coefficients::makePeakFilter(sampleRate, frequencyBands[5], 1.f, juce::Decibels::decibelsToGain(parameters_.equalizerSide[5]->get()));
+	*equalizerProcessors_.get<6>().state = *Coefficients::makePeakFilter(sampleRate, frequencyBands[6], 1.f, juce::Decibels::decibelsToGain(parameters_.equalizerSide[6]->get()));
+	*equalizerProcessors_.get<7>().state = *Coefficients::makePeakFilter(sampleRate, frequencyBands[7], 1.f, juce::Decibels::decibelsToGain(parameters_.equalizerSide[7]->get()));
+	*equalizerProcessors_.get<8>().state = *Coefficients::makePeakFilter(sampleRate, frequencyBands[8], 1.f, juce::Decibels::decibelsToGain(parameters_.equalizerSide[8]->get()));
+	*equalizerProcessors_.get<9>().state = *Coefficients::makeHighShelf(sampleRate, frequencyBands[9], 1.f, juce::Decibels::decibelsToGain(parameters_.equalizerSide[9]->get()));
 }
 
 void CossackAudioProcessor::releaseResources()
@@ -255,6 +272,23 @@ void CossackAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce
 	// high cut is the same for mid & side
 	if (parameters_.highCut->get())
 		highCutProcessor_.processBlock(buffer, midiMessages);
+
+	juce::dsp::AudioBlock<float> block(buffer);
+	juce::dsp::ProcessContextReplacing<float> context(block);
+
+	float sampleRate = getSampleRate();
+
+	*equalizerProcessors_.get<0>().state = *Coefficients::makeLowShelf(sampleRate, frequencyBands[0], 1.f, juce::Decibels::decibelsToGain(parameters_.equalizerSide[0]->get()));
+	*equalizerProcessors_.get<1>().state = *Coefficients::makePeakFilter(sampleRate, frequencyBands[1], 1.f, juce::Decibels::decibelsToGain(parameters_.equalizerSide[1]->get()));
+	*equalizerProcessors_.get<2>().state = *Coefficients::makePeakFilter(sampleRate, frequencyBands[2], 1.f, juce::Decibels::decibelsToGain(parameters_.equalizerSide[2]->get()));
+	*equalizerProcessors_.get<3>().state = *Coefficients::makePeakFilter(sampleRate, frequencyBands[3], 1.f, juce::Decibels::decibelsToGain(parameters_.equalizerSide[3]->get()));
+	*equalizerProcessors_.get<4>().state = *Coefficients::makePeakFilter(sampleRate, frequencyBands[4], 1.f, juce::Decibels::decibelsToGain(parameters_.equalizerSide[4]->get()));
+	*equalizerProcessors_.get<5>().state = *Coefficients::makePeakFilter(sampleRate, frequencyBands[5], 1.f, juce::Decibels::decibelsToGain(parameters_.equalizerSide[5]->get()));
+	*equalizerProcessors_.get<6>().state = *Coefficients::makePeakFilter(sampleRate, frequencyBands[6], 1.f, juce::Decibels::decibelsToGain(parameters_.equalizerSide[6]->get()));
+	*equalizerProcessors_.get<7>().state = *Coefficients::makePeakFilter(sampleRate, frequencyBands[7], 1.f, juce::Decibels::decibelsToGain(parameters_.equalizerSide[7]->get()));
+	*equalizerProcessors_.get<8>().state = *Coefficients::makePeakFilter(sampleRate, frequencyBands[8], 1.f, juce::Decibels::decibelsToGain(parameters_.equalizerSide[8]->get()));
+	*equalizerProcessors_.get<9>().state = *Coefficients::makeHighShelf(sampleRate, frequencyBands[9], 1.f, juce::Decibels::decibelsToGain(parameters_.equalizerSide[9]->get()));
+	equalizerProcessors_.process(context);
 }
 
 //==============================================================================
@@ -306,13 +340,14 @@ juce::AudioProcessorValueTreeState::ParameterLayout CossackAudioProcessor::creat
 	for (int i = 0; i < 10; i++)
 	{
 		// Equalizer
-		layout.add(std::make_unique<juce::AudioParameterFloat>("equalizer" + std::to_string(i), "Equalizer" + std::to_string(i), juce::NormalisableRange{ -12.f, 12.f, 0.1f, 1.f, false }, 0.f));
+		layout.add(std::make_unique<juce::AudioParameterFloat>("equalizerMid" + std::to_string(i), "Equalizer Mid" + std::to_string(i), juce::NormalisableRange{ -12.f, 12.f, 0.1f, 1.f, false }, 0.f));
+		layout.add(std::make_unique<juce::AudioParameterFloat>("equalizerSide" + std::to_string(i), "Equalizer Side" + std::to_string(i), juce::NormalisableRange{ -12.f, 12.f, 0.1f, 1.f, false }, 0.f));
 
 		// Harmonics
 		layout.add(std::make_unique<juce::AudioParameterBool>("harmonicsMid" + std::to_string(i), "Harmonics Mid" + std::to_string(i), false));
 
 		if (i >= 2)
-			layout.add(std::make_unique<juce::AudioParameterBool>("harmonicsSide" + std::to_string(i - 2), "Harmonics Side" + std::to_string(i - 2), false));
+			layout.add(std::make_unique<juce::AudioParameterBool>("harmonicsSide" + std::to_string(i), "Harmonics Side" + std::to_string(i), false));
 	}
 
 	// Mid/side

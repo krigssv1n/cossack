@@ -56,6 +56,8 @@ public:
 
 	juce::AudioProcessorValueTreeState& getValueTreeState();
 
+	static constexpr int frequencyBands[]{ 31, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000 };
+
 private:
 	juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
@@ -75,7 +77,8 @@ private:
 		//juce::AudioParameterInt* midSide = nullptr;
 
 		// Equalizer
-		juce::AudioParameterFloat* equalizer[10] = { nullptr };
+		juce::AudioParameterFloat* equalizerMid[10] = { nullptr };
+		juce::AudioParameterFloat* equalizerSide[10] = { nullptr };
 
 		// Harmonics
 		juce::AudioParameterBool* harmonicsMid[10] = { nullptr };
@@ -89,6 +92,13 @@ private:
 	LowHighCutProcessor midLowCutProcessor_{ 30.f, 8 };
 	LowHighCutProcessor sideLowCutProcessor_{ 100.f, 2 };
 	LowHighCutProcessor highCutProcessor_{ 20000.f, 8, true };
+
+	// FIXME: temporary
+	using Filter = juce::dsp::IIR::Filter<float>;
+	using Coefficients = juce::dsp::IIR::Coefficients<float>;
+	using Duplicator = juce::dsp::ProcessorDuplicator<Filter, Coefficients>;
+
+	juce::dsp::ProcessorChain<Duplicator, Duplicator, Duplicator, Duplicator, Duplicator, Duplicator, Duplicator, Duplicator, Duplicator, Duplicator> equalizerProcessors_;
 
 	//==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CossackAudioProcessor)

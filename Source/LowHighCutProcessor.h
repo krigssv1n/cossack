@@ -32,9 +32,12 @@ public:
 	void setIsHighCut(bool);
 
 private:
-	using ProcessorType = juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>>;
+	using Filter = juce::dsp::IIR::Filter<float>;
+	using Coefficients = juce::dsp::IIR::Coefficients<float>;
+	using Duplicator = juce::dsp::ProcessorDuplicator<Filter, Coefficients>;
 
-	std::vector<std::shared_ptr<ProcessorType>> processors_;
+	//juce::dsp::ProcessorChain<Duplicator, Duplicator, Duplicator, Duplicator> processors_;
+	std::vector<std::shared_ptr<Duplicator>> processors_;
 
 	float cutoffFrequency_;
 	int order_;
