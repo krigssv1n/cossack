@@ -31,7 +31,14 @@ void LowHighCutProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 		// Rebuild processor list
 		processors_.clear();
 
-		juce::dsp::ProcessSpec spec { sampleRate, static_cast<juce::uint32> (samplesPerBlock), getMainBusNumInputChannels()};
+		int nl = juce::jmin(getTotalNumInputChannels(), getTotalNumOutputChannels());
+
+		juce::dsp::ProcessSpec spec
+		{
+			sampleRate,
+			static_cast<juce::uint32> (samplesPerBlock),
+			static_cast<juce::uint32> (juce::jmin(getTotalNumInputChannels(), getTotalNumOutputChannels()))
+		};
 
 		//pd->state = juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, cutoffFrequency_);
 		//pd->state = juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, cutoffFrequency_);

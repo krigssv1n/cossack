@@ -15,12 +15,10 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 {
 	// Make sure that before the constructor has finished, you've set the
 	// editor's size to whatever you need it to be.
+	setResizable(true, true);
+	setResizeLimits(800, 600, 1200, 900);
+	getConstrainer()->setFixedAspectRatio(1.333333333333);
 	setSize(1000, 750);
-
-	//juce::Font avenirNextCyrRegularFont{ juce::Typeface::createSystemTypefaceFor(BinaryData::AvenirNextCyrRegular_ttf, BinaryData::AvenirNextCyrRegular_ttfSize) };
-	juce::Font collonseFont{ juce::Typeface::createSystemTypefaceFor(BinaryData::Collonse_ttf, BinaryData::Collonse_ttfSize) };
-	juce::Font collonseBoldFont{ juce::Typeface::createSystemTypefaceFor(BinaryData::CollonseBoldBold_ttf, BinaryData::CollonseBoldBold_ttfSize) };
-	juce::Font collonseHollowFont{ juce::Typeface::createSystemTypefaceFor(BinaryData::CollonseHollow_ttf, BinaryData::CollonseHollow_ttfSize) };
 
 	//juce::LookAndFeel::getDefaultLookAndFeel().setDefaultSansSerifTypeface(avenirNextCyrRegularFont.getTypefacePtr());
 	//getLookAndFeel().setDefaultSansSerifTypeface(avenirNextCyrRegularFont.getTypefacePtr());
@@ -28,6 +26,11 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 	auto& apvst = audioProcessor_.getValueTreeState();
 
 	background_ = juce::ImageCache::getFromMemory(BinaryData::background_jpg, BinaryData::background_jpgSize);
+
+	//avenirNextCyrRegularFont_ = juce::Font{ juce::Typeface::createSystemTypefaceFor(BinaryData::AvenirNextCyrRegular_ttf, BinaryData::AvenirNextCyrRegular_ttfSize) };
+	collonseFont_ = juce::Font{ juce::Typeface::createSystemTypefaceFor(BinaryData::Collonse_ttf, BinaryData::Collonse_ttfSize) };
+	collonseBoldFont_ = juce::Font{ juce::Typeface::createSystemTypefaceFor(BinaryData::CollonseBoldBold_ttf, BinaryData::CollonseBoldBold_ttfSize) };
+	collonseHollowFont_ = juce::Font{ juce::Typeface::createSystemTypefaceFor(BinaryData::CollonseHollow_ttf, BinaryData::CollonseHollow_ttfSize) };
 
 	//
 	// Low/high cut
@@ -61,7 +64,7 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 	addAndMakeVisible(midSideButtons_[0]);
 
 	midSideButtons_[1].setName("midSideButton");
-	midSideButtons_[1].setButtonText("Mid/Side");
+	midSideButtons_[1].setButtonText("=");
 	midSideButtons_[1].setTooltip("Normal playback");
 	midSideButtons_[1].setClickingTogglesState(true);
 	midSideButtons_[1].setRadioGroupId(1001);
@@ -136,17 +139,17 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 	for (int i = 0; i < 10; i++)
 	{
 		// Amplitude
-		equalizerMidSliders_[i].setSliderStyle(juce::Slider::SliderStyle::Rotary);
-		equalizerMidSliders_[i].setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-		addAndMakeVisible(equalizerMidSliders_[i]);
-
-		equalizerMidAttachments_[i].reset(new juce::AudioProcessorValueTreeState::SliderAttachment(apvst, "equalizerMid" + std::to_string(i), equalizerMidSliders_[i]));
-
 		equalizerSideSliders_[i].setSliderStyle(juce::Slider::SliderStyle::Rotary);
 		equalizerSideSliders_[i].setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
 		addAndMakeVisible(equalizerSideSliders_[i]);
 
 		equalizerSideAttachments_[i].reset(new juce::AudioProcessorValueTreeState::SliderAttachment(apvst, "equalizerSide" + std::to_string(i), equalizerSideSliders_[i]));
+
+		equalizerMidSliders_[i].setSliderStyle(juce::Slider::SliderStyle::Rotary);
+		equalizerMidSliders_[i].setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+		addAndMakeVisible(equalizerMidSliders_[i]);
+
+		equalizerMidAttachments_[i].reset(new juce::AudioProcessorValueTreeState::SliderAttachment(apvst, "equalizerMid" + std::to_string(i), equalizerMidSliders_[i]));
 
 		equalizerLabels_[i].setText(std::to_string(CossackAudioProcessor::frequencyBands[i]), juce::dontSendNotification);
 		equalizerLabels_[i].setJustificationType(juce::Justification::centred);
@@ -213,20 +216,16 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 	glueAttachment_.reset(new juce::AudioProcessorValueTreeState::SliderAttachment(apvst, "glue", glueSlider_));
 
 	{
-		collonseFont.setHeight(getBounds().getHeight() * 0.035f);
-
 		optoLabel_.setText("OPTO", juce::dontSendNotification);
 		optoLabel_.setJustificationType(juce::Justification::centred);
 		optoLabel_.setColour(juce::Label::textColourId, juce::Colours::black);
 		//optoLabel_.setColour(juce::Label::outlineColourId, juce::Colours::black);
-		optoLabel_.setFont(collonseFont);
 		addAndMakeVisible(optoLabel_);
 
 		glueLabel_.setText("GLUE", juce::dontSendNotification);
 		glueLabel_.setJustificationType(juce::Justification::centred);
 		glueLabel_.setColour(juce::Label::textColourId, juce::Colours::black);
 		//glueLabel_.setColour(juce::Label::outlineColourId, juce::Colours::black);
-		glueLabel_.setFont(collonseFont);
 		addAndMakeVisible(glueLabel_);
 	}
 
@@ -242,10 +241,6 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 		authorNameLabel_.setText("PAUL\nDUBROVSKY", juce::dontSendNotification);
 		authorNameLabel_.setJustificationType(juce::Justification::centred);
 		authorNameLabel_.setColour(juce::Label::textColourId, juce::Colours::black);
-
-		collonseHollowFont.setHeight(getBounds().getHeight() * 0.05f);
-		authorNameLabel_.setFont(collonseHollowFont);
-
 		addAndMakeVisible(authorNameLabel_);
 	}
 
@@ -253,10 +248,6 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 		pluginNameLabel_.setText("COSSACK", juce::dontSendNotification);
 		pluginNameLabel_.setJustificationType(juce::Justification::centred);
 		pluginNameLabel_.setColour(juce::Label::textColourId, juce::Colours::black);
-
-		collonseBoldFont.setHeight(getBounds().getHeight() * 0.07f);
-		pluginNameLabel_.setFont(collonseBoldFont);
-
 		addAndMakeVisible(pluginNameLabel_);
 	}
 
@@ -265,6 +256,50 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 
 CossackAudioProcessorEditor::~CossackAudioProcessorEditor()
 {
+	// Guarantee the deletion of attachments before the UI & listener objects as JUCE suggests
+
+	//
+	// Low/high cut
+	//
+
+	lowCutAttachment_.reset(nullptr);
+	highCutAttachment_.reset(nullptr);
+	//rolloffFactorAttachment_.reset(nullptr);
+
+	//
+	// Mid/side
+	//
+
+	int i;
+
+	for (i = 0; i < 3; i++)
+		midSideAttachments_[i].reset(nullptr);
+
+	for (i = 0; i < 10; i++)
+	{
+		//
+		// Equalizer
+		//
+
+		equalizerSideAttachments_[i].reset(nullptr);
+		equalizerMidAttachments_[i].reset(nullptr);
+
+		//
+		// Harmonics
+		//
+
+		harmonicsMidAttachments_[i].reset(nullptr);
+
+		if (i >= 2)
+			harmonicsSideAttachments_[i - 2].reset(nullptr);
+	}
+
+	//
+	// Compressors (LA-2A & SSL G-Master)
+	//
+
+	optoAttachment_.reset(nullptr);
+	glueAttachment_.reset(nullptr);
 }
 
 //==============================================================================
@@ -282,7 +317,7 @@ void CossackAudioProcessorEditor::paint (juce::Graphics& g)
 	g.setGradientFill(cg);
 	g.fillAll();
 */
-	g.drawImageAt(background_, 0, 0);
+	g.drawImage(background_, getLocalBounds().toFloat());
 	//svgTest_->draw(g, 1.f);
 
 	//lowCutShadow_.drawForRectangle(g, lowCutButton_.getBounds());
@@ -470,6 +505,10 @@ void CossackAudioProcessorEditor::resized()
 		editor.getWidth() - glueSlider_.getX() - glueSlider_.getWidth() - borderOffsetX,
 		compressorLabelHeight);
 
+	collonseFont_.setHeight(editor.getHeight() * 0.035f);
+	optoLabel_.setFont(collonseFont_);
+	glueLabel_.setFont(collonseFont_);
+
 	//
 	// Signal power indicator
 	//
@@ -478,6 +517,7 @@ void CossackAudioProcessorEditor::resized()
 	// Author & plugin info
 	//
 
+	// Author name
 	const float authorNameWidth = editor.getWidth() * 0.3f;
 	const float authorNameHeight = editor.getHeight() * 0.1f;
 
@@ -487,6 +527,10 @@ void CossackAudioProcessorEditor::resized()
 		authorNameWidth,
 		authorNameHeight);
 
+	collonseHollowFont_.setHeight(editor.getHeight() * 0.045f);
+	authorNameLabel_.setFont(collonseHollowFont_);
+
+	// Author logo
 	const float authorLogoWidth = editor.getWidth() * 0.09f;
 	const float authorLogoHeight = authorLogoWidth * (442.f / 390.f);
 
@@ -498,9 +542,13 @@ void CossackAudioProcessorEditor::resized()
 
 	const float pluginNameWidth = editor.getWidth() * 0.3f;
 
+	// Plugin name
 	pluginNameLabel_.setBounds(
 		editor.getCentreX() - pluginNameWidth * 0.5f,
 		borderOffsetY,
 		pluginNameWidth,
 		editor.getHeight() * 0.05f);
+
+	collonseBoldFont_.setHeight(editor.getHeight() * 0.07f);
+	pluginNameLabel_.setFont(collonseBoldFont_);
 }

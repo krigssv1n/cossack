@@ -32,7 +32,12 @@ private:
 
 	juce::Image background_;
 
-	juce::TooltipWindow tooltipWindow_ { this };
+	//juce::Font avenirNextCyrRegularFont_;
+	juce::Font collonseFont_;
+	juce::Font collonseBoldFont_;
+	juce::Font collonseHollowFont_;
+
+	juce::TooltipWindow tooltipWindow_{ this };
 
 	//
 	// Low/high cut

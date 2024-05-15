@@ -14,7 +14,9 @@
 //==============================================================================
 /**
 */
-class CossackAudioProcessor : public juce::AudioProcessor
+class CossackAudioProcessor :
+	public juce::AudioProcessor,
+	private juce::AudioProcessorValueTreeState::Listener
 {
 public:
     //==============================================================================
@@ -57,41 +59,48 @@ public:
 	juce::AudioProcessorValueTreeState& getValueTreeState();
 
 	static constexpr int frequencyBands[]{ 31, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000 };
+	static constexpr double inverseRootTwo = static_cast<double> (0.70710678118654752440L);
 
 private:
-	juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+	// Creates parameter list for the APVTS
+	static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+
+	void parameterChanged(const juce::String& parameterID, float newValue) override;
+	void updateParameters();
 
 	juce::AudioProcessorValueTreeState valueTreeState_;
+
+	// set in prepareToPlay()
+	double sampleRate_;
 
 	struct
 	{
 		// Low/high cut
-		juce::AudioParameterBool* lowCut = nullptr;
-		juce::AudioParameterBool* highCut = nullptr;
+		juce::AudioParameterBool* lowCut;
+		juce::AudioParameterBool* highCut;
 
 		// Mid/side
-		juce::AudioParameterBool* mid = nullptr;
-		juce::AudioParameterBool* midSide = nullptr;
-		juce::AudioParameterBool* side = nullptr;
-		// TODO: make radio button group attachment class
-		//juce::AudioParameterInt* midSide = nullptr;
+		juce::AudioParameterBool* mid;
+		juce::AudioParameterBool* midSide;
+		juce::AudioParameterBool* side;
+		// TODO: Make radio button group attachment class.
+		//juce::AudioParameterInt* midSide;
 
 		// Equalizer
-		juce::AudioParameterFloat* equalizerMid[10] = { nullptr };
-		juce::AudioParameterFloat* equalizerSide[10] = { nullptr };
+		juce::AudioParameterFloat* equalizerMid[10];
+		juce::AudioParameterFloat* equalizerSide[10];
 
 		// Harmonics
-		juce::AudioParameterBool* harmonicsMid[10] = { nullptr };
-		juce::AudioParameterBool* harmonicsSide[8] = { nullptr };
+		juce::AudioParameterBool* harmonicsMid[10];
+		juce::AudioParameterBool* harmonicsSide[8];
 
 		// Compressors
-		juce::AudioParameterFloat* opto = { nullptr };
-		juce::AudioParameterFloat* glue = { nullptr };
+		juce::AudioParameterFloat* opto;
+		juce::AudioParameterFloat* glue;
 	} parameters_;
 
-	LowHighCutProcessor midLowCutProcessor_{ 30.f, 8 };
-	LowHighCutProcessor sideLowCutProcessor_{ 100.f, 2 };
-	LowHighCutProcessor highCutProcessor_{ 20000.f, 8, true };
+	LowHighCutProcessor lowCutProcessor_[2];
+	LowHighCutProcessor highCutProcessor_;
 
 	// FIXME: temporary
 	using Filter = juce::dsp::IIR::Filter<float>;
