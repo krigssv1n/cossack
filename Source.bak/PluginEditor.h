@@ -64,11 +64,14 @@ private:
 	std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> midSideAttachments_[3];
 
 	//
-	// Equalizer, mid/side
+	// Equalizer
 	//
 
-	EllipticSlider equalizerSliders_[2][10];
-	std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> equalizerAttachments_[2][10];
+	EllipticSlider equalizerSideSliders_[10];
+	std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> equalizerSideAttachments_[10];
+
+	EllipticSlider equalizerMidSliders_[10];
+	std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> equalizerMidAttachments_[10];
 
 	juce::Label equalizerLabels_[10];
 	//juce::Label equalizerHzLabel_;

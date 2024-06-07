@@ -87,7 +87,8 @@ private:
 		//juce::AudioParameterInt* midSide;
 
 		// Equalizer
-		juce::AudioParameterFloat* equalizers[2][10];
+		juce::AudioParameterFloat* equalizerMid[10];
+		juce::AudioParameterFloat* equalizerSide[10];
 
 		// Harmonics
 		juce::AudioParameterBool* harmonicsMid[10];
@@ -106,7 +107,7 @@ private:
 	using Coefficients = juce::dsp::IIR::Coefficients<float>;
 	using Duplicator = juce::dsp::ProcessorDuplicator<Filter, Coefficients>;
 
-	juce::dsp::ProcessorChain<Duplicator, Duplicator, Duplicator, Duplicator, Duplicator, Duplicator, Duplicator, Duplicator, Duplicator, Duplicator> equalizerProcessors_[2];
+	juce::dsp::ProcessorChain<Duplicator, Duplicator, Duplicator, Duplicator, Duplicator, Duplicator, Duplicator, Duplicator, Duplicator, Duplicator> equalizerProcessors_;
 
 	//==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CossackAudioProcessor)

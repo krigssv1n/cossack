@@ -139,17 +139,17 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 	for (int i = 0; i < 10; i++)
 	{
 		// Amplitude
-		// FIXME: Make order independent from JUCE
-		for (int j = 1; j >= 0; j--)
-		{
-			const juce::String index = std::to_string(j) + "_" + std::to_string(i);
+		equalizerSideSliders_[i].setSliderStyle(juce::Slider::SliderStyle::Rotary);
+		equalizerSideSliders_[i].setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+		addAndMakeVisible(equalizerSideSliders_[i]);
 
-			equalizerSliders_[j][i].setSliderStyle(juce::Slider::SliderStyle::Rotary);
-			equalizerSliders_[j][i].setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-			addAndMakeVisible(equalizerSliders_[j][i]);
+		equalizerSideAttachments_[i].reset(new juce::AudioProcessorValueTreeState::SliderAttachment(apvst, "equalizerSide" + std::to_string(i), equalizerSideSliders_[i]));
 
-			equalizerAttachments_[j][i].reset(new juce::AudioProcessorValueTreeState::SliderAttachment(apvst, "equalizer" + index, equalizerSliders_[j][i]));
-		}
+		equalizerMidSliders_[i].setSliderStyle(juce::Slider::SliderStyle::Rotary);
+		equalizerMidSliders_[i].setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+		addAndMakeVisible(equalizerMidSliders_[i]);
+
+		equalizerMidAttachments_[i].reset(new juce::AudioProcessorValueTreeState::SliderAttachment(apvst, "equalizerMid" + std::to_string(i), equalizerMidSliders_[i]));
 
 		equalizerLabels_[i].setText(std::to_string(CossackAudioProcessor::frequencyBands[i]), juce::dontSendNotification);
 		equalizerLabels_[i].setJustificationType(juce::Justification::centred);
@@ -281,8 +281,8 @@ CossackAudioProcessorEditor::~CossackAudioProcessorEditor()
 		// Equalizer
 		//
 
-		for (int j = 0; j < 2; j++)
-			equalizerAttachments_[j][i].reset(nullptr);
+		equalizerSideAttachments_[i].reset(nullptr);
+		equalizerMidAttachments_[i].reset(nullptr);
 
 		//
 		// Harmonics
@@ -414,7 +414,7 @@ void CossackAudioProcessorEditor::resized()
 	for (int i = 0; i < 10; i++)
 	{
 		// Amplitude
-		equalizerSliders_[1][i].setBounds(
+		equalizerSideSliders_[i].setBounds(
 			equalizerX + i * (equalizerSideDiameter + equalizerSpacing),
 			equalizerY,
 			equalizerSideDiameter,
@@ -422,22 +422,22 @@ void CossackAudioProcessorEditor::resized()
 
 		const float offset = (equalizerSideDiameter - equalizerMidDiameter) * 0.5f;
 		
-		equalizerSliders_[0][i].setBounds(
-			equalizerSliders_[1][i].getX() + offset,
-			equalizerSliders_[1][i].getY() + offset,
+		equalizerMidSliders_[i].setBounds(
+			equalizerSideSliders_[i].getX() + offset,
+			equalizerSideSliders_[i].getY() + offset,
 			equalizerMidDiameter,
 			equalizerMidDiameter);
 
 		equalizerLabels_[i].setBounds(
-			equalizerSliders_[1][i].getX(),
-			equalizerSliders_[1][i].getY() + equalizerSliders_[1][i].getHeight(),
-			equalizerSliders_[1][i].getWidth(),
+			equalizerSideSliders_[i].getX(),
+			equalizerSideSliders_[i].getY() + equalizerSideSliders_[i].getHeight(),
+			equalizerSideSliders_[i].getWidth(),
 			equalizerLabelHeight);
 		
 		// Harmonics
-		const float harmonicButtonWidth = equalizerSliders_[1][i].getWidth() * 0.45f;
+		const float harmonicButtonWidth = equalizerSideSliders_[i].getWidth() * 0.45f;
 		const float harmonicButtonHeight = editor.getHeight() * 0.0333f;
-		float harmonicButtonX = (equalizerSliders_[1][i].getX() + equalizerSliders_[1][i].getWidth() * 0.5f) - harmonicButtonWidth * 0.5f;
+		float harmonicButtonX = (equalizerSideSliders_[i].getX() + equalizerSideSliders_[i].getWidth() * 0.5f) - harmonicButtonWidth * 0.5f;
 		const float harmonicButtonY = equalizerLabels_[i].getY() + equalizerLabels_[i].getHeight();
 
 		if (i >= 2)
@@ -458,9 +458,9 @@ void CossackAudioProcessorEditor::resized()
 			harmonicButtonHeight);
 
 		harmonicsLabels_[i].setBounds(
-			equalizerSliders_[1][i].getX(),
+			equalizerSideSliders_[i].getX(),
 			harmonicsMidButtons_[i].getY() + harmonicsMidButtons_[i].getHeight(),
-			equalizerSliders_[1][i].getWidth(),
+			equalizerSideSliders_[i].getWidth(),
 			equalizerLabelHeight);
 	}
 
