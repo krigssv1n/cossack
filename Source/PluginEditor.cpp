@@ -142,12 +142,11 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 		// FIXME: Make order independent from JUCE
 		for (int j = 1; j >= 0; j--)
 		{
-			const juce::String index = std::to_string(j) + "_" + std::to_string(i);
-
 			equalizerSliders_[j][i].setSliderStyle(juce::Slider::SliderStyle::Rotary);
 			equalizerSliders_[j][i].setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
 			addAndMakeVisible(equalizerSliders_[j][i]);
 
+			const juce::String index = std::to_string(j) + "_" + std::to_string(i);
 			equalizerAttachments_[j][i].reset(new juce::AudioProcessorValueTreeState::SliderAttachment(apvst, "equalizer" + index, equalizerSliders_[j][i]));
 		}
 

@@ -31,8 +31,6 @@ void LowHighCutProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 		// Rebuild processor list
 		processors_.clear();
 
-		int nl = juce::jmin(getTotalNumInputChannels(), getTotalNumOutputChannels());
-
 		// FIXME: Figure out if we need a setting for mono buffers to save performance
 		juce::dsp::ProcessSpec spec
 		{

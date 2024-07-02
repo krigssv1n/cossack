@@ -29,7 +29,7 @@ CossackAudioProcessor::CossackAudioProcessor()
 		{ 100.f, 2 }
 	},
 	highCutProcessor_{ 20000.f, 8, true },
-	valueTreeState_(*this, nullptr, juce::Identifier("NewProjectParameters"), createParameterLayout())
+	valueTreeState_(*this, nullptr, juce::Identifier("CossackParameters"), createParameterLayout())
 {
 	// Low/high cut
 	parameters_.lowCut = static_cast<juce::AudioParameterBool*>(valueTreeState_.getParameter("lowCut"));
@@ -133,22 +133,19 @@ void CossackAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBloc
 {
 	// Save this for later
 	sampleRate_ = sampleRate;
-	
+
 	// Use this method as the place to do any pre-playback
     // initialisation that you need..
 	lowCutProcessor_[0].prepareToPlay(sampleRate_, samplesPerBlock);
 	lowCutProcessor_[1].prepareToPlay(sampleRate_, samplesPerBlock);
 	highCutProcessor_.prepareToPlay(sampleRate_, samplesPerBlock);
 
-	juce::dsp::ProcessSpec spec
-	{
-		sampleRate_,
-		static_cast<juce::uint32> (samplesPerBlock),
-		static_cast<juce::uint32> (juce::jmin(getTotalNumInputChannels(), getTotalNumOutputChannels()))
-	};
+	// Mono spec for the mid equalizer or mono input
+	//equalizerProcessors_[0].prepare({ sampleRate_, static_cast<juce::uint32> (samplesPerBlock), 1 });
+	equalizerProcessors_[0].prepare({ sampleRate_, static_cast<juce::uint32> (samplesPerBlock), static_cast<juce::uint32> (juce::jmin(getTotalNumInputChannels(), getTotalNumOutputChannels())) });
 
-	for (int i = 0; i < 2; i++)
-		equalizerProcessors_[i].prepare(spec);
+	// Stereo spec for the side equalizer
+	equalizerProcessors_[1].prepare({ sampleRate_, static_cast<juce::uint32> (samplesPerBlock), static_cast<juce::uint32> (juce::jmin(getTotalNumInputChannels(), getTotalNumOutputChannels())) });
 }
 
 void CossackAudioProcessor::releaseResources()
@@ -218,53 +215,56 @@ void CossackAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce
 		float* samples[] = { buffer.getWritePointer(0), buffer.getWritePointer(1) };
 
 		// Construct the buffers
-		juce::AudioBuffer<float> midBuffer(1, buffer.getNumSamples());
-		float* midSamples = { midBuffer.getWritePointer(0) };
+		//juce::AudioBuffer<float> midBuffer(1, buffer.getNumSamples());
+		//float* midSamples = { midBuffer.getWritePointer(0) };
+		juce::AudioBuffer<float> midBuffer(2, buffer.getNumSamples());
+		float* midSamples[] = { midBuffer.getWritePointer(0), midBuffer.getWritePointer(1) };
 
 		juce::AudioBuffer<float> sideBuffer(2, buffer.getNumSamples());
-		float* sideSamples[] = {sideBuffer.getWritePointer(0), sideBuffer.getWritePointer(1) };
+		float* sideSamples[] = { sideBuffer.getWritePointer(0), sideBuffer.getWritePointer(1) };
 
 		//
 		// Split into mid & side.
 		// Expand the stereo base.
 		//
+
 		constexpr float stereoWidth = 1.2f;
 		constexpr float scale = 1.f / juce::jmax(1.f + stereoWidth, 2.f);
 
 		for (auto i = 0; i < buffer.getNumSamples(); i++)
 		{
-			midSamples[i] = (samples[0][i] + samples[1][i]) * scale;
+			//midSamples[i] = (samples[0][i] + samples[1][i]) * scale;
+			midSamples[0][i] = midSamples[1][i] = (samples[0][i] + samples[1][i]) * scale;
+
 			//sideSamples[0][i] = (samples[0][i] - samples[1][i]) * scale * stereoWidth;
+
 			//sideSamples[0][i] = samples[0][i] * stereoWidth - midSamples[i];
 			//sideSamples[1][i] = samples[1][i] * stereoWidth - midSamples[i];
 			sideSamples[0][i] = (samples[0][i] - samples[1][i]) * scale * stereoWidth;
 			sideSamples[1][i] = (samples[1][i] - samples[0][i]) * scale * stereoWidth;
 		}
 
+		// Bitfield to ease parameter usage
+		const char midSide = parameters_.mid->get() ? 1 : (parameters_.side->get() ? 2 : 3);
+
 		//
 		// Low cut
 		//
+
 		if (parameters_.lowCut->get())
 		{
-			if (parameters_.mid->get())
+			if (midSide & 1)
 				lowCutProcessor_[0].processBlock(midBuffer, midiMessages);
 
-			if (parameters_.side->get())
+			if (midSide & 2)
 				lowCutProcessor_[1].processBlock(sideBuffer, midiMessages);
-
-			if (parameters_.midSide->get())
-			{
-				lowCutProcessor_[0].processBlock(midBuffer, midiMessages);
-				lowCutProcessor_[1].processBlock(sideBuffer, midiMessages);
-			}
 		}
 
 		//
 		// Equalizer & buffer restoration
 		//
 		
-		// FIXME: Refactor this mess w/ a bitfield.
-		if (parameters_.midSide->get())
+		if ((midSide & 3) == 3)
 		{
 			{
 				// Mid equalization
@@ -290,13 +290,15 @@ void CossackAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce
 				//samples[1][i] = midSamples[i] - sideSamples[i];
 
 				// new way
-				samples[0][i] = midSamples[i] + sideSamples[0][i];
-				samples[1][i] = midSamples[i] + sideSamples[1][i];
+				//samples[0][i] = midSamples[i] + sideSamples[0][i];
+				//samples[1][i] = midSamples[i] + sideSamples[1][i];
+				samples[0][i] = midSamples[0][i] + sideSamples[0][i];
+				samples[1][i] = midSamples[1][i] + sideSamples[1][i];
 			}
 		}
 		else
 		{
-			if (parameters_.mid->get())
+			if (midSide & 1)
 			{
 				// Mid equalization
 				juce::dsp::AudioBlock<float> block(midBuffer);
@@ -305,10 +307,12 @@ void CossackAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce
 				equalizerProcessors_[0].process(context);
 
 				// Leave only the mid buffer
+				//buffer.copyFrom(0, 0, midBuffer, 0, 0, buffer.getNumSamples());
+				//buffer.copyFrom(1, 0, midBuffer, 0, 0, buffer.getNumSamples());
 				buffer.copyFrom(0, 0, midBuffer, 0, 0, buffer.getNumSamples());
-				buffer.copyFrom(1, 0, midBuffer, 0, 0, buffer.getNumSamples());
+				buffer.copyFrom(1, 0, midBuffer, 1, 0, buffer.getNumSamples());
 			}
-			else if (parameters_.side->get())
+			else if (midSide & 2)
 			{
 				// Side equalization
 				juce::dsp::AudioBlock<float> block(sideBuffer);
@@ -331,6 +335,7 @@ void CossackAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce
 		//
 		// Low cut
 		//
+		
 		if (parameters_.lowCut->get())
 			lowCutProcessor_[0].processBlock(buffer, midiMessages);
 
