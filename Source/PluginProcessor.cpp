@@ -29,8 +29,13 @@ CossackAudioProcessor::CossackAudioProcessor()
 		{ 100.f, 2 }
 	},
 	highCutProcessor_{ 20000.f, 8, true },
+	//convolution_{ juce::dsp::Convolution::NonUniform{ 1024 } },
 	valueTreeState_(*this, nullptr, juce::Identifier("CossackParameters"), createParameterLayout())
 {
+	//
+	// Get the parameters
+	//
+
 	// Low/high cut
 	parameters_.lowCut = static_cast<juce::AudioParameterBool*>(valueTreeState_.getParameter("lowCut"));
 	parameters_.highCut = static_cast<juce::AudioParameterBool*>(valueTreeState_.getParameter("highCut"));
@@ -60,6 +65,25 @@ CossackAudioProcessor::CossackAudioProcessor()
 	// Compressors
 	parameters_.opto = static_cast<juce::AudioParameterFloat*>(valueTreeState_.getParameter("opto"));
 	parameters_.glue = static_cast<juce::AudioParameterFloat*>(valueTreeState_.getParameter("glue"));
+
+	//
+	// Load other data
+	//
+
+	//auto dir = juce::File::getCurrentWorkingDirectory();
+
+	//int numTries = 0;
+
+	//while (!dir.getChildFile("Resources").exists() && numTries++ < 15)
+	//	dir = dir.getParentDirectory();
+
+	//convolution_.loadImpulseResponse(dir.getChildFile("Resources").getChildFile("guitar_amp.wav"),
+	convolution_.loadImpulseResponse(juce::File("F:/Media/Audio/Samples/Impulse Responses/guitar_amp.wav"),
+	//convolution_.loadImpulseResponse(juce::File("F:/Media/Audio/Samples/Impulse Responses/cassette_recorder.wav"),
+		juce::dsp::Convolution::Stereo::yes,
+		juce::dsp::Convolution::Trim::no,
+		1024);
+		//juce::dsp::Convolution::Normalise::no);
 }
 
 CossackAudioProcessor::~CossackAudioProcessor()
@@ -140,12 +164,21 @@ void CossackAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBloc
 	lowCutProcessor_[1].prepareToPlay(sampleRate_, samplesPerBlock);
 	highCutProcessor_.prepareToPlay(sampleRate_, samplesPerBlock);
 
+	// KRIGS: From JUCE docs.
+	// This method will return the total number of input channels by accumulating the number of channels on each input bus.
+	// The number of channels of the buffer passed to your processBlock callback will be equivalent
+	// to either getTotalNumInputChannels or getTotalNumOutputChannels - which ever is greater.
+	auto channelCount = static_cast<juce::uint32> (juce::jmax(getTotalNumInputChannels(), getTotalNumOutputChannels()));
+	juce::dsp::ProcessSpec spec{ sampleRate_, static_cast<juce::uint32> (samplesPerBlock), channelCount };
+
 	// Mono spec for the mid equalizer or mono input
-	//equalizerProcessors_[0].prepare({ sampleRate_, static_cast<juce::uint32> (samplesPerBlock), 1 });
-	equalizerProcessors_[0].prepare({ sampleRate_, static_cast<juce::uint32> (samplesPerBlock), static_cast<juce::uint32> (juce::jmin(getTotalNumInputChannels(), getTotalNumOutputChannels())) });
+	equalizerProcessors_[0].prepare(spec);
 
 	// Stereo spec for the side equalizer
-	equalizerProcessors_[1].prepare({ sampleRate_, static_cast<juce::uint32> (samplesPerBlock), static_cast<juce::uint32> (juce::jmin(getTotalNumInputChannels(), getTotalNumOutputChannels())) });
+	equalizerProcessors_[1].prepare(spec);
+
+	// IR convolution for saturation/distortion
+	convolution_.prepare(spec);
 }
 
 void CossackAudioProcessor::releaseResources()
@@ -180,20 +213,197 @@ bool CossackAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) 
 }
 #endif
 
+// TEST: Harmonic enhancement
+static float invSqrtFast(float x)
+{
+	float xhalf = 0.5f * x;
+	int i = *(int*)&x;
+	i = 0x5f3759df - (i >> 1);
+	x = *(float*)&i;
+	x = x * (1.5f - xhalf * x * x);
+
+	return x;
+}
+
+static inline float atanFast(float x)
+{
+	return x / (1.f + 0.28f * x * x);
+}
+
+template <typename T> int sgn(T val) {
+	return (T(0) < val) - (val < T(0));
+}
+
+float CossackAudioProcessor::testHarmonics(float x)
+{
+	const float k = 1.f + 7.f * parameters_.glue->get();
+
+	if (parameters_.harmonicsSide[0]->get())
+	{
+		// atan
+		// vacuum tubes emulation
+
+		// possibly normalize the atan() result into [-1; 1] range?
+		// * (2.f / juce::MathConstants<float>::pi);
+
+		float g = 1.f / (atanf(k) / k);
+		float y = atanf(k * x) / k;
+
+		return g * y;
+	}
+	else if (parameters_.harmonicsSide[1]->get())
+	{
+		// sin
+		const float invK = 9.f - k;
+		return sinf(juce::MathConstants<float>::pi / invK * x);
+		//return sinf(juce::MathConstants<float>::pi / k * x);
+
+		// approximation
+		//const float kx = k * x;
+		//return (kx - kx * kx * kx / 6.f) / k;
+	}
+	else if (parameters_.harmonicsSide[2]->get())
+	{
+		// sigmoid, adjusted logistical function
+		// vacuum tubes emulation
+		float g = 1.f / (2.f / (1.f + expf(-k)) - 1.f);
+		float y = 2.f / (1.f + expf(-k * x)) - 1.f;
+
+		return g * y;
+	}
+	else if (parameters_.harmonicsSide[3]->get())
+	{
+		// !
+		// tanh
+		// soft clipping, differential transistor pairs emulation
+		// TODO: autogain
+
+		//const float sinhX = sinhf(k * x);
+		//return sinhX / sqrtf(1.f + sinhX * sinhX) / k;
+		//return sinhX * invSqrtFast(1.f + sinhX * sinhX) / k;
+
+		//const float kx = k * x;
+		//return (kx - kx * kx * kx / 3.f) / k;
+
+		//return juce::dsp::FastMathApproximations::tanh(k * x) / k;
+		return tanhf(k * x) / k;
+	}
+	else if (parameters_.harmonicsSide[4]->get())
+	{
+	}
+	else if (parameters_.harmonicsSide[5]->get())
+	{
+	}
+	else if (parameters_.harmonicsSide[6]->get())
+	{
+	}
+	else if (parameters_.harmonicsSide[7]->get())
+	{
+		// !
+		// https://www.musicdsp.org/en/latest/Effects/89-2-wave-shaping-things.html
+		// TODO: autogain, 1 more parameter slider
+
+		float y;
+		float A = 1.f;
+		float B = k;
+
+		if (x < 0)
+			y = -A * tanhf(B * x) / B;
+		else
+			y = x;
+
+		if (y >= 0)
+			y = -A * tanh(B * y) / B;
+
+		return y;
+	}
+
+	// !
+	// error function
+	// soft clipping, simulation of an oscilloscope
+	// TODO: autogain
+	//return erff(k * x) / k;
+
+	// ?
+	// https://www.musicdsp.org/en/latest/Effects/43-waveshaper.html
+	//const float a = 0.01f + k / 4.f;
+
+	//float z = juce::MathConstants<float>::pi * a;
+	//float s = 1.f / sinf(z);
+	//float b = 1.f / a;
+
+	//if (x > b)
+	//	return 1.f;
+	//else
+	//	return sinf(z * x) * s;
+
+	// ?
+	//// https://www.musicdsp.org/en/latest/Effects/42-soft-saturation.html
+	//// f(x)'=f(x)*(1/((a+1)/2))
+	//const float a = parameters_.glue->get();
+	//float r = 0.f;
+
+	//if (x < a)
+	//	r = x;
+	//else if (x > a) {
+	//	const float b = (x - a) / (1 - a);
+	//	r = a + (x - a) / (1.f + b * b);
+	//}
+	//else if (x > 1.f)
+	//	r = (a + 1.f) / 2.f;
+
+	//return r;// / (a + 1.f) * 2.f;
+
+	// ?
+	// https://www.musicdsp.org/en/latest/Effects/41-waveshaper.html	
+	//return x * (fabsf(x) + k) / (x * x + (k - 1.f) * fabsf(x) + 1.f);
+
+	// ?
+	// https://www.musicdsp.org/en/latest/Effects/46-waveshaper.html
+	// a should be in [-1; 1)
+	//const float a = -1.f + 1.99f * (k - 1.f) / 19.f;
+	//const float b = 2.f * a / (1.f - a);
+	//return (1.f + b) * x / (1.f + b * fabsf(x));
+
+	// ?
+	// https://www.musicdsp.org/en/latest/Effects/104-variable-hardness-clipping-function.html
+	//return sgn(x) * powf(atanf(powf(fabsf(x), k)), (1 / k));
+	//return atanf(k * x) / atan(k);// *(2.f / juce::MathConstants<float>::pi);
+
+	// ?
+	// simple polynomial
+	//return 1.5f * x - 0.5f * x * x * x;
+
+	// ?
+	// soft clipping
+	// fairly similar to tanh, but not quite as sharp, thus producing slightly more distortion at low-to-moderate input levels
+	//return x / sqrtf(1.f + x * x);
+	//return x * invSqrtFast(1.f + x * x);
+
+	// ?
+	// soft clipping
+	//return sample / (1.f + fabs(sample));
+
+	return 0.f;
+}
+
 void CossackAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    // In case we have more outputs than inputs, this code clears any output
+	// KRIGS: Same for everything
+	const int sampleCount = buffer.getNumSamples();
+
+	// In case we have more outputs than inputs, this code clears any output
     // channels that didn't contain input data, (because these aren't
     // guaranteed to be empty - they may contain garbage).
     // This is here to avoid people getting screaming feedback
     // when they first compile a plugin, but obviously you don't need to keep
     // this code if your algorithm always overwrites all the output channels.
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
+        buffer.clear (i, 0, sampleCount);
 
     // This is the place where you'd normally do the guts of your plugin's
     // audio processing...
@@ -205,33 +415,40 @@ void CossackAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce
 	// KRIGS: Update parameters & their dependencies
 	updateParameters();
 
+	//
+	// Perform the processing.
+	//
+
+	const float harmonicsDrive = parameters_.opto->get();
+
+	// Plugin settings should disallow number of input channels higher than 2.
 	if (totalNumInputChannels == 2)
 	{
 		// Stereo input.
-		// Do the mid/side processing.
-		// Use separate values for filtering where necessary.
+		// Do the mid/side split.
+		// Use values from separate mid/side controls for filtering.
 
 		// TODO: Optimize the order of actions
 		float* samples[] = { buffer.getWritePointer(0), buffer.getWritePointer(1) };
 
 		// Construct the buffers
-		//juce::AudioBuffer<float> midBuffer(1, buffer.getNumSamples());
+		//juce::AudioBuffer<float> midBuffer(1, sampleCount);
 		//float* midSamples = { midBuffer.getWritePointer(0) };
-		juce::AudioBuffer<float> midBuffer(2, buffer.getNumSamples());
+		// Make it double channel for convenience
+		juce::AudioBuffer<float> midBuffer(2, sampleCount);
 		float* midSamples[] = { midBuffer.getWritePointer(0), midBuffer.getWritePointer(1) };
 
-		juce::AudioBuffer<float> sideBuffer(2, buffer.getNumSamples());
+		juce::AudioBuffer<float> sideBuffer(2, sampleCount);
 		float* sideSamples[] = { sideBuffer.getWritePointer(0), sideBuffer.getWritePointer(1) };
 
 		//
-		// Split into mid & side.
-		// Expand the stereo base.
+		// Mid/side split & stereo base expansion.
 		//
 
 		constexpr float stereoWidth = 1.2f;
 		constexpr float scale = 1.f / juce::jmax(1.f + stereoWidth, 2.f);
 
-		for (auto i = 0; i < buffer.getNumSamples(); i++)
+		for (auto i = 0; i < sampleCount; i++)
 		{
 			//midSamples[i] = (samples[0][i] + samples[1][i]) * scale;
 			midSamples[0][i] = midSamples[1][i] = (samples[0][i] + samples[1][i]) * scale;
@@ -244,11 +461,11 @@ void CossackAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce
 			sideSamples[1][i] = (samples[1][i] - samples[0][i]) * scale * stereoWidth;
 		}
 
-		// Bitfield to ease parameter usage
+		// Bitfield for ease of usage
 		const char midSide = parameters_.mid->get() ? 1 : (parameters_.side->get() ? 2 : 3);
 
 		//
-		// Low cut
+		// Low cut, always comes first
 		//
 
 		if (parameters_.lowCut->get())
@@ -261,7 +478,7 @@ void CossackAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce
 		}
 
 		//
-		// Equalizer & buffer restoration
+		// Equalization, harmonics & buffer restoration
 		//
 		
 		if ((midSide & 3) == 3)
@@ -270,22 +487,63 @@ void CossackAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce
 				// Mid equalization
 				juce::dsp::AudioBlock<float> block(midBuffer);
 				juce::dsp::ProcessContextReplacing<float> context(block);
-
 				equalizerProcessors_[0].process(context);
+			}
+
+			{
+				// Mid harmonics
+				if (parameters_.harmonicsMid[0]->get()) {
+					//juce::AudioBuffer<float> harmonicsBuffer(1, sampleCount);
+					//harmonicsBuffer.copyFrom(0, 0, midBuffer, 0, 0, sampleCount);
+
+					//juce::dsp::AudioBlock<float> block(harmonicsBuffer);
+					//juce::dsp::ProcessContextReplacing<float> context(block);
+					//convolution_.process(context);
+
+					//// Mix according to the drive value
+					//const float* harmonicsSamples{ harmonicsBuffer.getReadPointer(0) };
+
+					for (int i = 0; i < sampleCount; i++) {
+						//midSamples[0][i] = midSamples[1][i] = juce::jmap(harmonicsDrive, midSamples[0][i], harmonicsSamples[i]);
+						midSamples[0][i] = midSamples[1][i] = juce::jmap(harmonicsDrive, midSamples[0][i], testHarmonics(midSamples[0][i]));
+					}
+				}
 			}
 
 			{
 				// Side equalization
 				juce::dsp::AudioBlock<float> block(sideBuffer);
 				juce::dsp::ProcessContextReplacing<float> context(block);
-
 				equalizerProcessors_[1].process(context);
 			}
 
-			// Concatenate the mid & side back together
-			for (auto i = 0; i < buffer.getNumSamples(); i++)
 			{
-				// old way, before the decision to leave the side part stereo-split was made
+				// Side harmonics
+				if (parameters_.harmonicsMid[0]->get()) {
+					//juce::AudioBuffer<float> harmonicsBuffer(2, sampleCount);
+					//harmonicsBuffer.copyFrom(0, 0, sideBuffer, 0, 0, sampleCount);
+					//harmonicsBuffer.copyFrom(1, 0, sideBuffer, 1, 0, sampleCount);
+
+					//juce::dsp::AudioBlock<float> block(harmonicsBuffer);
+					//juce::dsp::ProcessContextReplacing<float> context(block);
+					//convolution_.process(context);
+
+					//// Mix according to the drive value
+					//const float* harmonicsSamples[] { harmonicsBuffer.getReadPointer(0), harmonicsBuffer.getReadPointer(1) };
+
+					for (int i = 0; i < sampleCount; i++) {
+						for (int j = 0; j < 2; j++) {
+							//sideSamples[j][i] = juce::jmap(harmonicsDrive, sideSamples[j][i], harmonicsSamples[j][i]);
+							sideSamples[j][i] = juce::jmap(harmonicsDrive, sideSamples[j][i], testHarmonics(sideSamples[j][i]));
+						}
+					}
+				}
+			}
+
+			// Concatenate the mid & side buffers back together
+			for (auto i = 0; i < sampleCount; i++)
+			{
+				// old way, before the decision was made to leave the side part stereo-split
 				//samples[0][i] = midSamples[i] + sideSamples[i];
 				//samples[1][i] = midSamples[i] - sideSamples[i];
 
@@ -300,56 +558,125 @@ void CossackAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce
 		{
 			if (midSide & 1)
 			{
-				// Mid equalization
-				juce::dsp::AudioBlock<float> block(midBuffer);
-				juce::dsp::ProcessContextReplacing<float> context(block);
+				{
+					// Mid equalization
+					juce::dsp::AudioBlock<float> block(midBuffer);
+					juce::dsp::ProcessContextReplacing<float> context(block);
+					equalizerProcessors_[0].process(context);
+				}
 
-				equalizerProcessors_[0].process(context);
+				{
+					// Mid harmonics
+					if (parameters_.harmonicsMid[0]->get()) {
+						//juce::AudioBuffer<float> harmonicsBuffer(1, sampleCount);
+						//harmonicsBuffer.copyFrom(0, 0, midBuffer, 0, 0, sampleCount);
 
-				// Leave only the mid buffer
-				//buffer.copyFrom(0, 0, midBuffer, 0, 0, buffer.getNumSamples());
-				//buffer.copyFrom(1, 0, midBuffer, 0, 0, buffer.getNumSamples());
-				buffer.copyFrom(0, 0, midBuffer, 0, 0, buffer.getNumSamples());
-				buffer.copyFrom(1, 0, midBuffer, 1, 0, buffer.getNumSamples());
+						//juce::dsp::AudioBlock<float> block(harmonicsBuffer);
+						//juce::dsp::ProcessContextReplacing<float> context(block);
+						//convolution_.process(context);
+
+						//// Mix according to the drive value
+						//const float* harmonicsSamples{ harmonicsBuffer.getReadPointer(0) };
+
+						for (int i = 0; i < sampleCount; i++) {
+							//midSamples[0][i] = midSamples[1][i] = juce::jmap(harmonicsDrive, midSamples[0][i], harmonicsSamples[i]);
+							midSamples[0][i] = midSamples[1][i] = juce::jmap(harmonicsDrive, midSamples[0][i], testHarmonics(midSamples[0][i]));
+						}
+					}
+				}
+
+				// Leave only the mid buffer, ditching the side
+				//buffer.copyFrom(0, 0, midBuffer, 0, 0, sampleCount);
+				//buffer.copyFrom(1, 0, midBuffer, 0, 0, sampleCount);
+				buffer.copyFrom(0, 0, midBuffer, 0, 0, sampleCount);
+				buffer.copyFrom(1, 0, midBuffer, 1, 0, sampleCount);
 			}
 			else if (midSide & 2)
 			{
-				// Side equalization
-				juce::dsp::AudioBlock<float> block(sideBuffer);
-				juce::dsp::ProcessContextReplacing<float> context(block);
+				{
+					// Side equalization
+					juce::dsp::AudioBlock<float> block(sideBuffer);
+					juce::dsp::ProcessContextReplacing<float> context(block);
+					equalizerProcessors_[1].process(context);
+				}
 
-				equalizerProcessors_[1].process(context);
+				{
+					// Side harmonics
+					if (parameters_.harmonicsMid[0]->get()) {
+						//juce::AudioBuffer<float> harmonicsBuffer(2, sampleCount);
+						//harmonicsBuffer.copyFrom(0, 0, sideBuffer, 0, 0, sampleCount);
+						//harmonicsBuffer.copyFrom(1, 0, sideBuffer, 1, 0, sampleCount);
 
-				// Leave only the side buffer
-				buffer.copyFrom(0, 0, sideBuffer, 0, 0, buffer.getNumSamples());
-				buffer.copyFrom(1, 0, sideBuffer, 1, 0, buffer.getNumSamples());
+						//juce::dsp::AudioBlock<float> block(harmonicsBuffer);
+						//juce::dsp::ProcessContextReplacing<float> context(block);
+						//convolution_.process(context);
+
+						//// Mix according to the drive value
+						//const float* harmonicsSamples[] { harmonicsBuffer.getReadPointer(0), harmonicsBuffer.getReadPointer(1) };
+
+						for (int i = 0; i < sampleCount; i++) {
+							for (int j = 0; j < 2; j++) {
+								//sideSamples[j][i] = juce::jmap(harmonicsDrive, sideSamples[j][i], harmonicsSamples[j][i]);
+								sideSamples[j][i] = juce::jmap(harmonicsDrive, sideSamples[j][i], testHarmonics(sideSamples[j][i]));
+							}
+						}
+					}
+				}
+
+				// Leave only the side buffer, ditching the mid
+				buffer.copyFrom(0, 0, sideBuffer, 0, 0, sampleCount);
+				buffer.copyFrom(1, 0, sideBuffer, 1, 0, sampleCount);
 			}
 		}
 	}
 	else
 	{
 		// Mono input.
-		// Don't do mid/side processing.
-		// Use mid values for filtering.
+		// Don't do mid/side split.
+		// Use values from mid-related controls for filtering.
+		float* samples = buffer.getWritePointer(0);
 
 		//
-		// Low cut
+		// Low cut, always comes first
 		//
 		
 		if (parameters_.lowCut->get())
 			lowCutProcessor_[0].processBlock(buffer, midiMessages);
 
+
 		//
-		// Equalizer
+		// Equalization
 		//
 		
-		juce::dsp::AudioBlock<float> block(buffer);
-		juce::dsp::ProcessContextReplacing<float> context(block);
+		{
+			juce::dsp::AudioBlock<float> block(buffer);
+			juce::dsp::ProcessContextReplacing<float> context(block);
+			equalizerProcessors_[0].process(context);
+		}
 
-		equalizerProcessors_[0].process(context);
+		//
+		// Harmonics
+		//
+
+		if (parameters_.harmonicsMid[0]->get()) {
+			//juce::AudioBuffer<float> harmonicsBuffer(1, sampleCount);
+			//harmonicsBuffer.copyFrom(0, 0, buffer, 0, 0, sampleCount);
+
+			//juce::dsp::AudioBlock<float> block(harmonicsBuffer);
+			//juce::dsp::ProcessContextReplacing<float> context(block);
+			//convolution_.process(context);
+
+			//// Mix according to the drive value
+			//const float* harmonicsSamples = harmonicsBuffer.getReadPointer(0);
+
+			for (int i = 0; i < sampleCount; i++) {
+				//samples[i] = juce::jmap(harmonicsDrive, samples[i], harmonicsSamples[i]);
+				samples[i] = juce::jmap(harmonicsDrive, samples[i], testHarmonics(samples[i]));
+			}
+		}
 	}
 
-	// High cut is the same for mid & side
+	// High cut, always finishes the chain and is the same for mid & side.
 	if (parameters_.highCut->get())
 		highCutProcessor_.processBlock(buffer, midiMessages);
 }
@@ -445,15 +772,15 @@ void CossackAudioProcessor::updateParameters()
 
 	for (int i = 0; i < 2; i++)
 	{
-		*equalizerProcessors_[i].get<0>().state = *Coefficients::makeLowShelf(sampleRate_, frequencyBands[0], inverseRootTwo, juce::Decibels::decibelsToGain(parameters_.equalizers[i][0]->get()));
-		*equalizerProcessors_[i].get<1>().state = *Coefficients::makePeakFilter(sampleRate_, frequencyBands[1], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][1]->get()));
-		*equalizerProcessors_[i].get<2>().state = *Coefficients::makePeakFilter(sampleRate_, frequencyBands[2], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][2]->get()));
-		*equalizerProcessors_[i].get<3>().state = *Coefficients::makePeakFilter(sampleRate_, frequencyBands[3], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][3]->get()));
-		*equalizerProcessors_[i].get<4>().state = *Coefficients::makePeakFilter(sampleRate_, frequencyBands[4], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][4]->get()));
-		*equalizerProcessors_[i].get<5>().state = *Coefficients::makePeakFilter(sampleRate_, frequencyBands[5], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][5]->get()));
-		*equalizerProcessors_[i].get<6>().state = *Coefficients::makePeakFilter(sampleRate_, frequencyBands[6], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][6]->get()));
-		*equalizerProcessors_[i].get<7>().state = *Coefficients::makePeakFilter(sampleRate_, frequencyBands[7], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][7]->get()));
-		*equalizerProcessors_[i].get<8>().state = *Coefficients::makePeakFilter(sampleRate_, frequencyBands[8], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][8]->get()));
-		*equalizerProcessors_[i].get<9>().state = *Coefficients::makeHighShelf(sampleRate_, frequencyBands[9], inverseRootTwo, juce::Decibels::decibelsToGain(parameters_.equalizers[i][9]->get()));
+		*equalizerProcessors_[i].get<0>().state = *Coefficients::makeLowShelf(sampleRate_, crossoverFrequencies[0], inverseSqrt2, juce::Decibels::decibelsToGain(parameters_.equalizers[i][0]->get()));
+		*equalizerProcessors_[i].get<1>().state = *Coefficients::makePeakFilter(sampleRate_, crossoverFrequencies[1], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][1]->get()));
+		*equalizerProcessors_[i].get<2>().state = *Coefficients::makePeakFilter(sampleRate_, crossoverFrequencies[2], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][2]->get()));
+		*equalizerProcessors_[i].get<3>().state = *Coefficients::makePeakFilter(sampleRate_, crossoverFrequencies[3], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][3]->get()));
+		*equalizerProcessors_[i].get<4>().state = *Coefficients::makePeakFilter(sampleRate_, crossoverFrequencies[4], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][4]->get()));
+		*equalizerProcessors_[i].get<5>().state = *Coefficients::makePeakFilter(sampleRate_, crossoverFrequencies[5], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][5]->get()));
+		*equalizerProcessors_[i].get<6>().state = *Coefficients::makePeakFilter(sampleRate_, crossoverFrequencies[6], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][6]->get()));
+		*equalizerProcessors_[i].get<7>().state = *Coefficients::makePeakFilter(sampleRate_, crossoverFrequencies[7], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][7]->get()));
+		*equalizerProcessors_[i].get<8>().state = *Coefficients::makePeakFilter(sampleRate_, crossoverFrequencies[8], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][8]->get()));
+		*equalizerProcessors_[i].get<9>().state = *Coefficients::makeHighShelf(sampleRate_, crossoverFrequencies[9], inverseSqrt2, juce::Decibels::decibelsToGain(parameters_.equalizers[i][9]->get()));
 	}
 }

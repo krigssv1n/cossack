@@ -10,6 +10,7 @@
 
 #include <JuceHeader.h>
 #include "LowHighCutProcessor.h"
+#include "MultiBandProcessor.h"
 
 //==============================================================================
 /**
@@ -58,8 +59,10 @@ public:
 
 	juce::AudioProcessorValueTreeState& getValueTreeState();
 
-	static constexpr int frequencyBands[]{ 31, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000 };
-	static constexpr double inverseRootTwo = static_cast<double> (0.70710678118654752440L);
+	//static constexpr double inverseSqrt2 = static_cast<double> (0.70710678118654752440L);
+	static constexpr double inverseSqrt2 = 1.0 / juce::MathConstants<double>::sqrt2;
+
+	static constexpr int crossoverFrequencies[10]{ 31, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000 };
 
 private:
 	// Creates parameter list for the APVTS
@@ -67,6 +70,8 @@ private:
 
 	void parameterChanged(const juce::String& parameterID, float newValue) override;
 	void updateParameters();
+
+	float testHarmonics(float sample);
 
 	juce::AudioProcessorValueTreeState valueTreeState_;
 
@@ -107,6 +112,10 @@ private:
 	using Duplicator = juce::dsp::ProcessorDuplicator<Filter, Coefficients>;
 
 	juce::dsp::ProcessorChain<Duplicator, Duplicator, Duplicator, Duplicator, Duplicator, Duplicator, Duplicator, Duplicator, Duplicator, Duplicator> equalizerProcessors_[2];
+
+	juce::dsp::Convolution convolution_;
+
+	MultiBandProcessor<float> multiBandProcessor_;
 
 	//==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CossackAudioProcessor)

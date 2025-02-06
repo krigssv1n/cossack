@@ -87,7 +87,8 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 	// Equalizer & harmonics
 	//
 
-	const char *harmonicsNames[10]{ "Burning", "Hot", "Warm", "Nice", "Mild", "Cool", "Brisk", "Chilly", "Cold", "Freezing" };
+	//const char *harmonicsNames[10]{ "Burning", "Hot", "Warm", "Nice", "Mild", "Cool", "Brisk", "Chilly", "Cold", "Freezing" };
+	const char *harmonicsNames[10]{ "harmonics on/off", "", "atan", "sin", "logistical", "tanh (-)", "", "", "", "dual soft clip (-)" };
 	const juce::Colour harmonicsButtonColours[10]{
 		// set 1 (from flower picture)
 		//{ 64, 64, 64 },
@@ -150,7 +151,7 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 			equalizerAttachments_[j][i].reset(new juce::AudioProcessorValueTreeState::SliderAttachment(apvst, "equalizer" + index, equalizerSliders_[j][i]));
 		}
 
-		equalizerLabels_[i].setText(std::to_string(CossackAudioProcessor::frequencyBands[i]), juce::dontSendNotification);
+		equalizerLabels_[i].setText(std::to_string(CossackAudioProcessor::crossoverFrequencies[i]), juce::dontSendNotification);
 		equalizerLabels_[i].setJustificationType(juce::Justification::centred);
 		equalizerLabels_[i].setColour(juce::Label::textColourId, juce::Colours::black);
 		addAndMakeVisible(equalizerLabels_[i]);
@@ -215,13 +216,15 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 	glueAttachment_.reset(new juce::AudioProcessorValueTreeState::SliderAttachment(apvst, "glue", glueSlider_));
 
 	{
-		optoLabel_.setText("OPTO", juce::dontSendNotification);
+		//optoLabel_.setText("OPTO", juce::dontSendNotification);
+		optoLabel_.setText("harmonics 0-100%", juce::dontSendNotification);
 		optoLabel_.setJustificationType(juce::Justification::centred);
 		optoLabel_.setColour(juce::Label::textColourId, juce::Colours::black);
 		//optoLabel_.setColour(juce::Label::outlineColourId, juce::Colours::black);
 		addAndMakeVisible(optoLabel_);
 
-		glueLabel_.setText("GLUE", juce::dontSendNotification);
+		//glueLabel_.setText("GLUE", juce::dontSendNotification);
+		glueLabel_.setText("k 1-8", juce::dontSendNotification);
 		glueLabel_.setJustificationType(juce::Justification::centred);
 		glueLabel_.setColour(juce::Label::textColourId, juce::Colours::black);
 		//glueLabel_.setColour(juce::Label::outlineColourId, juce::Colours::black);

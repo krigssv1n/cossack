@@ -36,7 +36,8 @@ void LowHighCutProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 		{
 			sampleRate,
 			static_cast<juce::uint32> (samplesPerBlock),
-			static_cast<juce::uint32> (juce::jmin(getTotalNumInputChannels(), getTotalNumOutputChannels()))
+			//static_cast<juce::uint32> (juce::jmin(getTotalNumInputChannels(), getTotalNumOutputChannels()))
+			static_cast<juce::uint32> (juce::jmax(getTotalNumInputChannels(), getTotalNumOutputChannels()))
 		};
 
 		//pd->state = juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, cutoffFrequency_);
