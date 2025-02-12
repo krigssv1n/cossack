@@ -67,23 +67,22 @@ private:
 	// Equalizer, mid/side
 	//
 
-	EllipticSlider equalizerSliders_[2][CossackConstants::bandCount];
-	std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> equalizerAttachments_[2][CossackConstants::bandCount];
+	EllipticSlider equalizerSliders_[2][10];
+	std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> equalizerAttachments_[2][10];
 
-	juce::Label equalizerLabels_[CossackConstants::bandCount];
+	juce::Label equalizerLabels_[10];
 	//juce::Label equalizerHzLabel_;
 
 	//
 	// Harmonics
 	//
 
-	juce::TextButton harmonicsMidButtons_[CossackConstants::bandCount];
-	std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> harmonicsMidAttachments_[CossackConstants::bandCount];
+	juce::TextButton harmonicsMidButtons_[10];
+	std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> harmonicsMidAttachments_[10];
 
 	// We don't use frequencies 31 & 63 for adding side harmonics
-	static_assert(CossackConstants::bandCount > 2);
-	juce::TextButton harmonicsSideButtons_[CossackConstants::bandCount - 2];
-	std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> harmonicsSideAttachments_[CossackConstants::bandCount - 2];
+	juce::TextButton harmonicsSideButtons_[8];
+	std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> harmonicsSideAttachments_[8];
 
 	juce::Label harmonicsLabels_[10];
 

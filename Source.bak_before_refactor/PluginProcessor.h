@@ -9,7 +9,6 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "Common.h"
 #include "LowHighCutProcessor.h"
 #include "MultiBandProcessor.h"
 
@@ -60,6 +59,15 @@ public:
 
 	juce::AudioProcessorValueTreeState& getValueTreeState();
 
+	//static constexpr double inverseSqrt2 = static_cast<double> (0.70710678118654752440L);
+	static constexpr double inverseSqrt2 = 1.0 / juce::MathConstants<double>::sqrt2;
+
+	// Same as the number of bands
+	static constexpr int centralFrequencies[]{ 31, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000 };
+
+	// One less than the number of bands
+	static constexpr float crossoverFrequencies[]{ 46.875f, 93.75f, 187.5f, 375.f, 750.f, 1500.f, 3000.f, 6000.f, 12000.f };
+
 private:
 	// Creates parameter list for the APVTS
 	static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
@@ -88,7 +96,7 @@ private:
 		//juce::AudioParameterInt* midSide;
 
 		// Equalizer
-		juce::AudioParameterFloat* equalizers[2][CossackConstants::bandCount];
+		juce::AudioParameterFloat* equalizers[2][10];
 
 		// Harmonics
 		juce::AudioParameterBool* harmonicsMid[10];
@@ -102,10 +110,6 @@ private:
 	LowHighCutProcessor lowCutProcessor_[2];
 	LowHighCutProcessor highCutProcessor_;
 
-	MultiBandProcessor<float> multiBandProcessor_;
-
-	juce::dsp::Gain<float> equalizerGains_[2][CossackConstants::bandCount];
-
 	// FIXME: temporary
 	using Filter = juce::dsp::IIR::Filter<float>;
 	using Coefficients = juce::dsp::IIR::Coefficients<float>;
@@ -114,6 +118,8 @@ private:
 	juce::dsp::ProcessorChain<Duplicator, Duplicator, Duplicator, Duplicator, Duplicator, Duplicator, Duplicator, Duplicator, Duplicator, Duplicator> equalizerProcessors_[2];
 
 	juce::dsp::Convolution convolution_;
+
+	MultiBandProcessor<float> multiBandProcessor_;
 
 	//==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CossackAudioProcessor)

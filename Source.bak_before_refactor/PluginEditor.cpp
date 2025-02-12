@@ -87,8 +87,9 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 	// Equalizer & harmonics
 	//
 
-	const char *harmonicsNames[CossackConstants::bandCount]{ "Burning", "Hot", "Warm", "Nice", "Mild", "Cool", "Brisk", "Chilly", "Cold", "Freezing" };
-	const juce::Colour harmonicsButtonColours[CossackConstants::bandCount]{
+	const char *harmonicsNames[10]{ "Burning", "Hot", "Warm", "Nice", "Mild", "Cool", "Brisk", "Chilly", "Cold", "Freezing" };
+	//const char *harmonicsNames[10]{ "harmonics on/off", "", "atan", "sin", "logistical", "tanh", "", "", "", "" };
+	const juce::Colour harmonicsButtonColours[10]{
 		// set 1 (from flower picture)
 		//{ 64, 64, 64 },
 		//{ 146, 46, 0 },
@@ -113,7 +114,7 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 		{ 121, 189, 255 },
 		{ 119, 83, 255 }
 	};
-	const juce::Colour harmonicsTextColours[CossackConstants::bandCount]{
+	const juce::Colour harmonicsTextColours[10]{
 		//{ 255, 255, 255 },
 		//{ 255, 255, 255 },
 		//{ 255, 255, 255 },
@@ -136,7 +137,7 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 		{ 0, 0, 0 }
 	};
 
-	for (int i = 0; i < CossackConstants::bandCount; i++)
+	for (int i = 0; i < 10; i++)
 	{
 		// Amplitude
 		// FIXME: Make order independent from JUCE
@@ -150,7 +151,7 @@ CossackAudioProcessorEditor::CossackAudioProcessorEditor (CossackAudioProcessor&
 			equalizerAttachments_[j][i].reset(new juce::AudioProcessorValueTreeState::SliderAttachment(apvst, "equalizer" + index, equalizerSliders_[j][i]));
 		}
 
-		equalizerLabels_[i].setText(std::to_string(CossackConstants::bandFrequencies[i]), juce::dontSendNotification);
+		equalizerLabels_[i].setText(std::to_string(CossackAudioProcessor::centralFrequencies[i]), juce::dontSendNotification);
 		equalizerLabels_[i].setJustificationType(juce::Justification::centred);
 		equalizerLabels_[i].setColour(juce::Label::textColourId, juce::Colours::black);
 		addAndMakeVisible(equalizerLabels_[i]);
@@ -276,7 +277,7 @@ CossackAudioProcessorEditor::~CossackAudioProcessorEditor()
 	for (i = 0; i < 3; i++)
 		midSideAttachments_[i].reset(nullptr);
 
-	for (i = 0; i < CossackConstants::bandCount; i++)
+	for (i = 0; i < 10; i++)
 	{
 		//
 		// Equalizer
@@ -409,11 +410,10 @@ void CossackAudioProcessorEditor::resized()
 	const float equalizerMidDiameter = editor.getWidth() * 0.05f;
 	const float equalizerSideDiameter = editor.getWidth() * 0.08f;
 	//const float equalizerSpacing = 10.f;
-	//const float equalizerSpacing = (editor.getWidth() - equalizerX * 2.f) / 10.f - equalizerSideDiameter;
-	const float equalizerSpacing = (editor.getWidth() - equalizerX * 2.f) / float(CossackConstants::bandCount) - equalizerSideDiameter;
+	const float equalizerSpacing = (editor.getWidth() - equalizerX * 2.f) / 10.f - equalizerSideDiameter;
 	const float equalizerLabelHeight = editor.getHeight() * 0.05f;
 
-	for (int i = 0; i < CossackConstants::bandCount; i++)
+	for (int i = 0; i < 10; i++)
 	{
 		// Amplitude
 		equalizerSliders_[1][i].setBounds(

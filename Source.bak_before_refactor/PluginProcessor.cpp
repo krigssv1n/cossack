@@ -45,21 +45,21 @@ CossackAudioProcessor::CossackAudioProcessor()
 	parameters_.midSide = static_cast<juce::AudioParameterBool*>(valueTreeState_.getParameter("midSide"));
 	parameters_.side = static_cast<juce::AudioParameterBool*>(valueTreeState_.getParameter("side"));
 
-	for (int j = 0; j < CossackConstants::bandCount; j++)
+	for (int i = 0; i < 10; i++)
 	{
 		// Equalizer
-		for (int i = 0; i < 2; i++)
+		for (int j = 0; j < 2; j++)
 		{
-			const juce::String index = std::to_string(i) + "_" + std::to_string(j);
-			parameters_.equalizers[i][j] = static_cast<juce::AudioParameterFloat*>(valueTreeState_.getParameter("equalizer" + index));
-			valueTreeState_.addParameterListener(parameters_.equalizers[i][j]->getParameterID(), this);
+			const juce::String index = std::to_string(j) + "_" + std::to_string(i);
+			parameters_.equalizers[j][i] = static_cast<juce::AudioParameterFloat*>(valueTreeState_.getParameter("equalizer" + index));
+			valueTreeState_.addParameterListener(parameters_.equalizers[j][i]->getParameterID(), this);
 		}
 
 		// Harmonics
-		parameters_.harmonicsMid[j] = static_cast<juce::AudioParameterBool*>(valueTreeState_.getParameter("harmonicsMid" + std::to_string(j)));
+		parameters_.harmonicsMid[i] = static_cast<juce::AudioParameterBool*>(valueTreeState_.getParameter("harmonicsMid" + std::to_string(i)));
 
-		if (j >= 2)
-			parameters_.harmonicsSide[j - 2] = static_cast<juce::AudioParameterBool*>(valueTreeState_.getParameter("harmonicsSide" + std::to_string(j)));
+		if (i >= 2)
+			parameters_.harmonicsSide[i - 2] = static_cast<juce::AudioParameterBool*>(valueTreeState_.getParameter("harmonicsSide" + std::to_string(i)));
 	}
 
 	// Compressors
@@ -70,7 +70,6 @@ CossackAudioProcessor::CossackAudioProcessor()
 	// Load other data
 	//
 
-/*
 	//auto dir = juce::File::getCurrentWorkingDirectory();
 
 	//int numTries = 0;
@@ -85,7 +84,6 @@ CossackAudioProcessor::CossackAudioProcessor()
 		juce::dsp::Convolution::Trim::no,
 		1024);
 		//juce::dsp::Convolution::Normalise::no);
-*/
 }
 
 CossackAudioProcessor::~CossackAudioProcessor()
@@ -161,29 +159,23 @@ void CossackAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBloc
 	sampleRate_ = sampleRate;
 
 	// Use this method as the place to do any pre-playback
-    // initialisation that you need...
-	for (int i = 0; i < 2; i++)
-		lowCutProcessor_[i].prepareToPlay(sampleRate_, samplesPerBlock);
-
+    // initialisation that you need..
+	lowCutProcessor_[0].prepareToPlay(sampleRate_, samplesPerBlock);
+	lowCutProcessor_[1].prepareToPlay(sampleRate_, samplesPerBlock);
 	highCutProcessor_.prepareToPlay(sampleRate_, samplesPerBlock);
 
-	// KRIGS: From JUCE docs...
+	// KRIGS: From JUCE docs.
 	// This method will return the total number of input channels by accumulating the number of channels on each input bus.
 	// The number of channels of the buffer passed to your processBlock callback will be equivalent
 	// to either getTotalNumInputChannels or getTotalNumOutputChannels - which ever is greater.
 	auto channelCount = static_cast<juce::uint32> (juce::jmax(getTotalNumInputChannels(), getTotalNumOutputChannels()));
 	juce::dsp::ProcessSpec spec{ sampleRate_, static_cast<juce::uint32> (samplesPerBlock), channelCount };
 
-	// Multi-band splitter
-	multiBandProcessor_.prepare(spec);
+	// Mono spec for the mid equalizer or mono input
+	equalizerProcessors_[0].prepare(spec);
 
-	for (int i = 0; i < 2; i++) {
-		for (int j = 0; j < CossackConstants::bandCount; j++)
-			equalizerGains_[i][j].prepare(spec);
-
-		// FIXME: Maybe a mono spec for the mid equalizer or mono input, and stereo spec for the side equalizer?
-		equalizerProcessors_[i].prepare(spec);
-	}
+	// Stereo spec for the side equalizer
+	equalizerProcessors_[1].prepare(spec);
 
 	// IR convolution for saturation/distortion
 	convolution_.prepare(spec);
@@ -412,31 +404,12 @@ void CossackAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce
 	updateParameters();
 
 	//
-	// Perform the processing
+	// Perform the processing.
 	//
 
-	if (totalNumInputChannels == 2) {
-		float* samples[] = { buffer.getWritePointer(0), buffer.getWritePointer(1) };
-
-		for (int i = 0; i < sampleCount; i++) {
-			for (int j = 0; j < 2; j++) {
-				multiBandProcessor_.processSample(j, samples[j][i]);
-
-				auto bands = multiBandProcessor_.getBandsPointer();
-
-				for (int k = 0; k < CossackConstants::bandCount; k++) {
-					bands[k] = float(parameters_.harmonicsMid[k]->get()) * equalizerGains_[0][k].processSample(bands[k]);
-				}
-
-				samples[j][i] = multiBandProcessor_.reconstructSample(j);
-			}
-		}
-	}
-
-#if 0
 	const float harmonicsDrive = parameters_.opto->get();
 
-	// Plugin settings should disallow number of input channels higher than 2
+	// Plugin settings should disallow number of input channels higher than 2.
 	if (totalNumInputChannels == 2)
 	{
 		// Stereo input.
@@ -694,7 +667,6 @@ void CossackAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce
 	// High cut, always finishes the chain and is the same for mid & side.
 	if (parameters_.highCut->get())
 		highCutProcessor_.processBlock(buffer, midiMessages);
-#endif
 }
 
 //==============================================================================
@@ -705,7 +677,7 @@ bool CossackAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* CossackAudioProcessor::createEditor()
 {
-    return new CossackAudioProcessorEditor(*this);
+    return new CossackAudioProcessorEditor (*this);
 }
 
 //==============================================================================
@@ -747,7 +719,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout CossackAudioProcessor::creat
 	layout.add(std::make_unique<juce::AudioParameterBool>("highCut", "High Cut", false));
 	//layout.add(std::make_unique<juce::AudioParameterFloat>("rolloffFactor", "Rolloff Factor", juce::NormalisableRange{ 5.f, 100.f, 0.1f, 0.5f }, 48.f));
 
-	for (int i = 0; i < CossackConstants::bandCount; i++)
+	for (int i = 0; i < 10; i++)
 	{
 		// Equalizer
 		for (int j = 0; j < 2; j++)
@@ -784,26 +756,19 @@ void CossackAudioProcessor::parameterChanged(const juce::String& parameterID, fl
 
 void CossackAudioProcessor::updateParameters()
 {
-	//constexpr double inverseSqrt2 = static_cast<double> (0.70710678118654752440L);
-	const double inverseSqrt2 = 1.0 / juce::MathConstants<double>::sqrt2;
 	const float Q = 2.f;
 
-	// Mid/side
 	for (int i = 0; i < 2; i++)
 	{
-		// Band
-		for (int j = 0; j < CossackConstants::bandCount; j++)
-			equalizerGains_[i][j].setGainDecibels(parameters_.equalizers[i][j]->get());
-
-		*equalizerProcessors_[i].get<0>().state = *Coefficients::makeLowShelf(sampleRate_, CossackConstants::bandFrequencies[0], inverseSqrt2, juce::Decibels::decibelsToGain(parameters_.equalizers[i][0]->get()));
-		*equalizerProcessors_[i].get<1>().state = *Coefficients::makePeakFilter(sampleRate_, CossackConstants::bandFrequencies[1], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][1]->get()));
-		*equalizerProcessors_[i].get<2>().state = *Coefficients::makePeakFilter(sampleRate_, CossackConstants::bandFrequencies[2], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][2]->get()));
-		*equalizerProcessors_[i].get<3>().state = *Coefficients::makePeakFilter(sampleRate_, CossackConstants::bandFrequencies[3], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][3]->get()));
-		*equalizerProcessors_[i].get<4>().state = *Coefficients::makePeakFilter(sampleRate_, CossackConstants::bandFrequencies[4], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][4]->get()));
-		*equalizerProcessors_[i].get<5>().state = *Coefficients::makePeakFilter(sampleRate_, CossackConstants::bandFrequencies[5], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][5]->get()));
-		*equalizerProcessors_[i].get<6>().state = *Coefficients::makePeakFilter(sampleRate_, CossackConstants::bandFrequencies[6], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][6]->get()));
-		*equalizerProcessors_[i].get<7>().state = *Coefficients::makePeakFilter(sampleRate_, CossackConstants::bandFrequencies[7], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][7]->get()));
-		*equalizerProcessors_[i].get<8>().state = *Coefficients::makePeakFilter(sampleRate_, CossackConstants::bandFrequencies[8], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][8]->get()));
-		*equalizerProcessors_[i].get<9>().state = *Coefficients::makeHighShelf(sampleRate_, CossackConstants::bandFrequencies[9], inverseSqrt2, juce::Decibels::decibelsToGain(parameters_.equalizers[i][9]->get()));
+		*equalizerProcessors_[i].get<0>().state = *Coefficients::makeLowShelf(sampleRate_, centralFrequencies[0], inverseSqrt2, juce::Decibels::decibelsToGain(parameters_.equalizers[i][0]->get()));
+		*equalizerProcessors_[i].get<1>().state = *Coefficients::makePeakFilter(sampleRate_, centralFrequencies[1], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][1]->get()));
+		*equalizerProcessors_[i].get<2>().state = *Coefficients::makePeakFilter(sampleRate_, centralFrequencies[2], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][2]->get()));
+		*equalizerProcessors_[i].get<3>().state = *Coefficients::makePeakFilter(sampleRate_, centralFrequencies[3], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][3]->get()));
+		*equalizerProcessors_[i].get<4>().state = *Coefficients::makePeakFilter(sampleRate_, centralFrequencies[4], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][4]->get()));
+		*equalizerProcessors_[i].get<5>().state = *Coefficients::makePeakFilter(sampleRate_, centralFrequencies[5], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][5]->get()));
+		*equalizerProcessors_[i].get<6>().state = *Coefficients::makePeakFilter(sampleRate_, centralFrequencies[6], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][6]->get()));
+		*equalizerProcessors_[i].get<7>().state = *Coefficients::makePeakFilter(sampleRate_, centralFrequencies[7], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][7]->get()));
+		*equalizerProcessors_[i].get<8>().state = *Coefficients::makePeakFilter(sampleRate_, centralFrequencies[8], Q, juce::Decibels::decibelsToGain(parameters_.equalizers[i][8]->get()));
+		*equalizerProcessors_[i].get<9>().state = *Coefficients::makeHighShelf(sampleRate_, centralFrequencies[9], inverseSqrt2, juce::Decibels::decibelsToGain(parameters_.equalizers[i][9]->get()));
 	}
 }
