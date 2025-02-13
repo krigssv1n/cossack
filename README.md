@@ -1,2 +1,2 @@
 # cossack
-Audio plugin.
+Audio plugin in development.
